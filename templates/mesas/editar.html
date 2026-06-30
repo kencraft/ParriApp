@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}{% if mesa %}Editar Mesa {{ mesa.numero }}{% else %}Nueva Mesa{% endif %} - Parri{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="fw-semibold mb-0">
+                    <i class="bi {% if mesa %}bi-pencil{% else %}bi-plus-lg{% endif %} me-2"></i>
+                    {% if mesa %}Editar Mesa {{ mesa.numero }}{% else %}Nueva Mesa{% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" novalidate>
+                    <div class="mb-4">
+                        <label for="numero" class="form-label fw-medium">Número de mesa <span class="text-danger">*</span></label>
+                        <input type="number" name="numero" id="numero" class="form-control form-control-lg" 
+                               value="{{ mesa.numero if mesa else '' }}" required min="1" autofocus>
+                        <div class="form-text">Número único para identificar la mesa</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 flex-grow-1">
+                            <i class="bi bi-check-lg me-1"></i> {% if mesa %}Actualizar{% else %}Crear{% endif %}
+                        </button>
+                        <a href="{{ url_for('mesas.listar') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-5">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

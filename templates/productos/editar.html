@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{% if producto %}Editar {{ producto.nombre }}{% else %}Nuevo Producto{% endif %} - Parri{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="fw-semibold mb-0">
+                    <i class="bi {% if producto %}bi-pencil{% else %}bi-plus-lg{% endif %} me-2"></i>
+                    {% if producto %}Editar Producto{% else %}Nuevo Producto{% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" novalidate>
+                    <div class="mb-4">
+                        <label for="nombre" class="form-label fw-medium">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" id="nombre" class="form-control form-control-lg" 
+                               value="{{ producto.nombre if producto else '' }}" required maxlength="100" autofocus>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="categoria_id" class="form-label fw-medium">Categoría <span class="text-danger">*</span></label>
+                            <select name="categoria_id" id="categoria_id" class="form-select form-select-lg" required>
+                                <option value="">Seleccionar categoría...</option>
+                                {% for cat in categorias %}
+                                <option value="{{ cat.id }}" {% if producto and producto.categoria_id == cat.id %}selected{% endif %}>
+                                    {{ cat.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if not categorias %}
+                            <div class="form-text text-danger">No hay categorías. <a href="{{ url_for('categorias.listar') }}">Crear categorías</a> primero.</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="precio" class="form-label fw-medium">Precio <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="precio" id="precio" class="form-control" 
+                                       value="{{ producto.precio if producto else '' }}" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    {% if producto %}
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="activo" id="activo" {% if producto.activo %}checked{% endif %}>
+                            <label class="form-check-label fw-medium" for="activo">Activo</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 flex-grow-1">
+                            <i class="bi bi-check-lg me-1"></i> {% if producto %}Actualizar{% else %}Crear{% endif %}
+                        </button>
+                        <a href="{{ url_for('productos.listar') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-5">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

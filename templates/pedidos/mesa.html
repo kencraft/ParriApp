@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}{% if mesa and mesa.id %}Mesa {{ mesa.numero }}{% else %}Mostrador{% endif %} - Parri{% endblock %}
+{% block content %}
+{% if mostrador %}
+<div class="alert alert-info d-flex align-items-center justify-content-between">
+    <div>
+        <i class="bi bi-cart me-2"></i> <strong>Venta directa - Mostrador</strong>
+        <span class="badge bg-info ms-2">Pedido #{{ pedido.id }}</span>
+    </div>
+    {% if pedido and pedido.id and pedido.detalles %}
+    <a href="{{ url_for('pagos.cobrar', pedido_id=pedido.id) }}" class="btn btn-success btn-sm rounded-pill px-3">
+        <i class="bi bi-cash me-1"></i> Cobrar
+    </a>
+    {% endif %}
+</div>
+{% elif mesa and mesa.id %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-semibold mb-0">
+            <i class="bi bi-table me-2"></i> Mesa {{ mesa.numero }}
+            <span class="badge {% if mesa.estado == 'ocupada' %}bg-warning text-dark{% else %}bg-success{% endif %} ms-2 fs-6">
+                {{ mesa.estado|capitalize }}
+            </span>
+            {% if mesa.estado == 'ocupada' and mesa.comensales %}
+            <span class="badge bg-info ms-2 fs-6">
+                <i class="bi bi-people me-1"></i>{{ mesa.comensales }}
+            </span>
+            {% endif %}
+        </h3>
+        {% if mesa.estado == 'ocupada' and pedido %}
+        <div class="mt-2 d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center">
+                <span class="text-muted small me-2"><i class="bi bi-person"></i> Mozo:</span>
+                {% if pedido.mozo %}
+                <span class="fw-medium">{{ pedido.mozo.nombre }}</span>
+                {% else %}
+                <span class="text-muted fst-italic small">Sin asignar</span>
+                {% endif %}
+            </div>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0" type="button" data-bs-toggle="collapse" data-bs-target="#editarMesaPanel" aria-expanded="false">
+                <i class="bi bi-pencil"></i>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        {% if mesa.estado == 'ocupada' and pedido and pedido.detalles %}
+            {% if pedido.preticket_impreso %}
+            <a href="{{ url_for('pagos.cobrar', pedido_id=pedido.id) }}" class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-cash me-1"></i> Cobrar
+            </a>
+            {% else %}
+            <a href="{{ url_for('pedidos.preticket', mesa_id=mesa.id) }}" class="btn btn-outline-secondary rounded-pill px-3" target="_blank" onclick="setTimeout(function(){ window.location.href='{{ url_for('index') }}'; }, 100)">
+                <i class="bi bi-receipt me-1"></i> Pre-Cuenta
+            </a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if mesa.estado == 'ocupada' and pedido %}
+<div class="collapse mb-4" id="editarMesaPanel">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+            <form method="POST" action="{{ url_for('pedidos.editar_mesa', mesa_id=mesa.id) }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Mozo asignado</label>
+                    <select name="mozo_id" class="form-select form-select-sm">
+                        <option value="">Sin mozo</option>
+                        {% for mozo in mozos %}
+                        <option value="{{ mozo.id }}" {% if pedido.mozo_id == mozo.id %}selected{% endif %}>{{ mozo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-medium">Comensales</label>
+                    <input type="number" name="comensales" class="form-control form-control-sm" value="{{ mesa.comensales or '' }}" placeholder="0" min="1">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">
+                        <i class="bi bi-check-lg me-1"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+{% if mesa and mesa.id and mesa.estado == 'libre' %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-5">
+                <i class="bi bi-table display-1 text-success mb-3"></i>
+                <h3 class="fw-semibold mb-2">Mesa {{ mesa.numero }}</h3>
+                <form method="POST" action="{{ url_for('pedidos.abrir', mesa_id=mesa.id) }}">
+                    <div class="row justify-content-center mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-medium text-start d-block">Mozo (opcional)</label>
+                            <select name="mozo_id" class="form-select">
+                                <option value="">Sin mozo asignado</option>
+                                {% for mozo in mozos %}
+                                <option value="{{ mozo.id }}">{{ mozo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-medium text-start d-block">Comensales (opcional)</label>
+                            <input type="number" name="comensales" class="form-control" placeholder="Cantidad de personas" min="1">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5">
+                        <i class="bi bi-door-open me-2"></i> Abrir Mesa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif pedido %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="fw-semibold mb-0"><i class="bi bi-plus-circle me-2"></i>Agregar Producto</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{% if mostrador %}{{ url_for('pedidos.agregar_mostrador', pedido_id=pedido.id) }}{% else %}{{ url_for('pedidos.agregar', mesa_id=mesa.id) }}{% endif %}">
+                    <div class="mb-3">
+                        <label for="productoSelect" class="form-label fw-medium">Producto</label>
+                        <select name="producto_id" id="productoSelect" class="form-select" required>
+                            <option value="">Seleccionar producto...</option>
+                            {% for p in productos %}
+                            <option value="{{ p.id }}" data-precio="{{ p.precio }}" data-categoria="{{ p.categoria }}">
+                                {{ p.nombre }} - ${{ "%.2f"|format(p.precio) }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="cantidad" class="form-label fw-medium">Cantidad</label>
+                            <input type="number" name="cantidad" id="cantidad" class="form-control" value="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="notas" class="form-label fw-medium">Notas</label>
+                        <input type="text" name="notas" id="notas" class="form-control" placeholder="Ej: sin sal, bien cocido...">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar al Pedido
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold mb-0"><i class="bi bi-list-check me-2"></i>Pedido Actual</h5>
+                <div>
+                    {% if pedido.mozo %}
+                    <span class="badge bg-secondary rounded-pill px-3 py-2">Mozo: {{ pedido.mozo.nombre }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if pedido.detalles %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Producto</th>
+                                <th class="text-center">Cant</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end pe-2">Subtotal</th>
+                                <th>Notas</th>
+                                <th class="text-end pe-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in pedido.detalles %}
+                            <tr>
+                                <td class="ps-4 fw-medium">{{ d.producto.nombre }}</td>
+                                <td class="text-center">
+                                    <form method="POST" action="{{ url_for('pedidos.editar_detalle', detalle_id=d.id) }}" class="d-inline">
+                                        <input type="number" name="cantidad" value="{{ d.cantidad }}" min="1" 
+                                               class="form-control form-control-sm text-center d-inline" style="width:65px" onchange="this.form.submit()">
+                                    </form>
+                                </td>
+                                <td class="text-end text-muted">${{ "%.2f"|format(d.precio_unitario) }}</td>
+                                <td class="text-end pe-2 fw-semibold">${{ "%.2f"|format(d.subtotal()) }}</td>
+                                <td><small class="text-muted fst-italic">{{ d.notas or '' }}</small></td>
+                                <td class="text-end pe-4">
+                                    <form method="POST" action="{{ url_for('pedidos.eliminar_detalle', detalle_id=d.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este item?')">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" title="Eliminar">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <td colspan="3" class="ps-4"><strong>TOTAL</strong></td>
+                                <td class="text-end pe-2"><strong class="fs-5">${{ "%.2f"|format(pedido.total) }}</strong></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="p-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Total de items: {{ pedido.detalles|length }}</span>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i> Volver
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-cart display-3 text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay productos en el pedido aún</h5>
+                    <p class="text-muted small">Agregue productos desde el panel izquierdo</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    {% if mesa and mesa.id %}
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left me-1"></i> Volver al inicio
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

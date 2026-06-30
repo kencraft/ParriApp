@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}{% if mozo %}Editar {{ mozo.nombre }}{% else %}Nuevo Mozo{% endif %} - Parri{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="fw-semibold mb-0">
+                    <i class="bi {% if mozo %}bi-pencil{% else %}bi-plus-lg{% endif %} me-2"></i>
+                    {% if mozo %}Editar Mozo{% else %}Nuevo Mozo{% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" novalidate>
+                    <div class="mb-4">
+                        <label for="nombre" class="form-label fw-medium">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" id="nombre" class="form-control form-control-lg" 
+                               value="{{ mozo.nombre if mozo else '' }}" required maxlength="100" autofocus>
+                    </div>
+                    <div class="mb-4">
+                        <label for="telefono" class="form-label fw-medium">Teléfono</label>
+                        <input type="tel" name="telefono" id="telefono" class="form-control form-control-lg" 
+                               value="{{ mozo.telefono if mozo else '' }}" maxlength="20" placeholder="+54 9 11 1234-5678">
+                    </div>
+                    {% if mozo %}
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="activo" id="activo" {% if mozo.activo %}checked{% endif %}>
+                            <label class="form-check-label fw-medium" for="activo">Activo</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 flex-grow-1">
+                            <i class="bi bi-check-lg me-1"></i> {% if mozo %}Actualizar{% else %}Crear{% endif %}
+                        </button>
+                        <a href="{{ url_for('mozos.listar') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-5">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

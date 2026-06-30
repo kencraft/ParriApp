@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Cobrar Pedido - Parri{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="fw-semibold mb-0"><i class="bi bi-cash-coin me-2"></i>Cobro de Pedido</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-4">
+                    <div class="col-sm-4">
+                        <p class="text-muted small mb-1">Mesa / Mostrador</p>
+                        <p class="fw-semibold">
+                            {% if pedido.tipo == 'mesa' %}Mesa {{ pedido.mesa.numero }}{% else %}Mostrador{% endif %}
+                        </p>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="text-muted small mb-1">Mozo</p>
+                        <p class="fw-semibold">{{ pedido.mozo.nombre }}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <p class="text-muted small mb-1">Fecha</p>
+                        <p class="fw-semibold">{{ pedido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                </div>
+
+                <h5 class="fw-semibold mb-3">Detalle del pedido</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end pe-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for g in pedido.detalles_agrupados %}
+                            <tr>
+                                <td>{{ g.producto.nombre }}</td>
+                                <td class="text-center">{{ g.cantidad }}</td>
+                                <td class="text-end">${{ "%.2f"|format(g.precio_unitario) }}</td>
+                                <td class="text-end pe-3 fw-medium">${{ "%.2f"|format(g.subtotal) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <td colspan="3" class="fw-bold">TOTAL</td>
+                                <td class="text-end pe-3"><strong class="fs-5">${{ "%.2f"|format(pedido.total) }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <form method="POST" action="{{ url_for('pagos.procesar', pedido_id=pedido.id) }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="metodo_pago" class="form-label fw-medium">Método de pago <span class="text-danger">*</span></label>
+                            <select name="metodo_pago" id="metodo_pago" class="form-select form-select-lg" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta de crédito/débito</option>
+                                <option value="transferencia">Transferencia bancaria</option>
+                                <option value="qr">QR / Mercado Pago</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="monto_recibido" class="form-label fw-medium">Monto recibido <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="monto_recibido" id="monto_recibido" class="form-control" 
+                                       value="{{ pedido.total }}" step="0.01" min="{{ pedido.total }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <a href="{% if pedido.tipo == 'mesa' %}{{ url_for('pedidos.mesa', mesa_id=pedido.mesa_id) }}{% else %}{{ url_for('pedidos.mostrador') }}{% endif %}" 
+                           class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i> Volver
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5">
+                            <i class="bi bi-check-circle me-1"></i> Confirmar Pago
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
