@@ -4,68 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pre-Cuenta - Mesa {{ mesa.numero }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ticket.css') }}">
 </head>
 <body>
-    <div class="comanda-wrap">
-        <div class="comanda-header">
-            <div class="restaurant-name">PARRI</div>
-            <div class="doc-title">PRE-CUENTA</div>
-        </div>
+    <div class="ticket">
+        <div class="ticket-brand">PARRI</div>
+        <div class="ticket-doc">PRE-CUENTA</div>
 
-        <div class="comanda-info">
-            <div class="info-row">
-                <span class="info-label">Mesa:</span>
-                <span class="info-value">{{ mesa.numero }}</span>
+        <table class="ticket-meta">
+            <tr>
+                <td class="lbl">Mesa:</td>
+                <td class="val">{{ mesa.numero }}</td>
                 {% if mesa.comensales %}
-                <span class="info-label">Com:</span>
-                <span class="info-value">{{ mesa.comensales }}</span>
+                <td class="lbl" style="padding-left:10px;">Com:</td>
+                <td class="val">{{ mesa.comensales }}</td>
                 {% endif %}
-                <span class="info-label">Pedido N°:</span>
-                <span class="info-value">#{{ pedido.id }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Mozo:</span>
-                <span class="info-value">{{ pedido.mozo.nombre if pedido.mozo else '—' }}</span>
-                <span class="info-label">Fecha:</span>
-                <span class="info-value">{{ pedido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</span>
-            </div>
-        </div>
+                <td class="lbl" style="padding-left:10px;">Ped:</td>
+                <td class="val">#{{ pedido.id }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Mozo:</td>
+                <td class="val">{{ pedido.mozo.nombre if pedido.mozo else '—' }}</td>
+                <td class="lbl" style="padding-left:10px;">Fecha:</td>
+                <td class="val" colspan="3">{{ pedido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+        </table>
 
-        <table class="comanda-table">
+        <div class="ticket-rule"></div>
+
+        <table class="ticket-table">
             <thead>
                 <tr>
-                    <th class="qty">CANT</th>
-                    <th>PRODUCTO</th>
-                    <th class="text-end">PRECIO</th>
-                    <th class="text-end">SUBTOTAL</th>
+                    <th class="c-qty">CANT</th>
+                    <th class="c-prod">PRODUCTO</th>
+                    <th class="c-price">PRECIO</th>
+                    <th class="c-sub">SUBTOTAL</th>
                 </tr>
             </thead>
             <tbody>
                 {% for g in pedido.detalles_agrupados %}
                 <tr>
-                    <td class="qty">{{ g.cantidad }}</td>
-                    <td>{{ g.producto.nombre }}{% if g.notas %}<br><small class="text-muted">{{ g.notas }}</small>{% endif %}</td>
-                    <td class="text-end">${{ "%.2f"|format(g.precio_unitario) }}</td>
-                    <td class="text-end fw-medium">${{ "%.2f"|format(g.subtotal) }}</td>
+                    <td class="c-qty">{{ g.cantidad }}</td>
+                    <td class="c-prod">{{ g.producto.nombre }}{% if g.notas %}<br><span class="c-note">{{ g.notas }}</span>{% endif %}</td>
+                    <td class="c-price">${{ "%.2f"|format(g.precio_unitario) }}</td>
+                    <td class="c-sub">${{ "%.2f"|format(g.subtotal) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <div class="preticket-total">
-            <hr>
-            <div class="total-line">
-                <span>TOTAL</span>
-                <span>${{ "%.2f"|format(pedido.total) }}</span>
-            </div>
+        <div class="ticket-rule"></div>
+
+        <div class="ticket-total">
+            <span class="lbl">TOTAL</span>
+            <span>${{ "%.2f"|format(pedido.total) }}</span>
         </div>
 
-        <div class="comanda-footer">
-            <hr>
-            <p class="text-center">{{ mensaje_ticket }}</p>
-        </div>
+        <div class="ticket-footer">{{ mensaje_ticket }}</div>
     </div>
 
     <div class="text-center mt-3 no-print">
@@ -78,7 +75,6 @@
         </a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>

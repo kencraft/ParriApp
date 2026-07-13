@@ -115,15 +115,6 @@ def eliminar_detalle(detalle_id):
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
     return redirect(url_for('pedidos.mesa', mesa_id=pedido.mesa_id))
 
-@pedidos_bp.route('/mesa/<int:mesa_id>/comanda')
-def comanda(mesa_id):
-    mesa = Mesa.query.get_or_404(mesa_id)
-    pedido = Pedido.query.filter_by(mesa_id=mesa_id, estado='abierto').first()
-    if not pedido:
-        flash('No hay pedido abierto', 'warning')
-        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
-    return render_template('pedidos/comanda.html', mesa=mesa, pedido=pedido)
-
 @pedidos_bp.route('/mesa/<int:mesa_id>/preticket')
 def preticket(mesa_id):
     mesa = Mesa.query.get_or_404(mesa_id)

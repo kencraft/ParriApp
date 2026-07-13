@@ -4,80 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comprobante de Pago</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ticket.css') }}">
 </head>
 <body>
-    <div class="comprobante-wrap">
-        <div class="comprobante-header">
-            <div class="restaurant-name">PARRI</div>
-            <div class="doc-title">COMPROBANTE DE PAGO</div>
-            <div class="doc-subtitle">Original</div>
-        </div>
+    <div class="ticket">
+        <div class="ticket-brand">PARRI</div>
+        <div class="ticket-doc">COMPROBANTE DE PAGO</div>
+        <div class="ticket-sub">Original</div>
 
-        <div class="comprobante-info">
-            <table class="info-table">
-                <tr>
-                    <td class="info-label">Fecha:</td>
-                    <td class="info-value">{{ pago.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Pedido N°:</td>
-                    <td class="info-value">#{{ pago.pedido.id }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Mesa:</td>
-                    <td class="info-value">
-                        {% if pago.pedido.tipo == 'mesa' %}Mesa {{ pago.pedido.mesa.numero }}{% else %}Mostrador{% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="info-label">Mozo:</td>
-                    <td class="info-value">{{ pago.pedido.mozo.nombre }}</td>
-                </tr>
-            </table>
-        </div>
+        <table class="ticket-meta">
+            <tr>
+                <td class="lbl">Fecha:</td>
+                <td class="val">{{ pago.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Pedido:</td>
+                <td class="val">#{{ pago.pedido.id }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Mesa:</td>
+                <td class="val">{% if pago.pedido.tipo == 'mesa' %}Mesa {{ pago.pedido.mesa.numero }}{% else %}Mostrador{% endif %}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Mozo:</td>
+                <td class="val">{{ pago.pedido.mozo.nombre }}</td>
+            </tr>
+        </table>
 
-        <div class="comprobante-divider"></div>
+        <div class="ticket-rule-dashed"></div>
 
-        <table class="comprobante-items">
+        <table class="ticket-table">
             <thead>
                 <tr>
-                    <th>Producto</th>
-                    <th class="qty">Cant</th>
-                    <th class="price">Precio</th>
-                    <th class="price">Subtotal</th>
+                    <th class="c-prod">Producto</th>
+                    <th class="c-qty">Cant</th>
+                    <th class="c-price">Precio</th>
+                    <th class="c-sub">Subtotal</th>
                 </tr>
             </thead>
             <tbody>
                 {% for d in pago.pedido.detalles %}
                 <tr>
-                    <td>{{ d.producto.nombre }}</td>
-                    <td class="qty">{{ d.cantidad }}</td>
-                    <td class="price">${{ "%.2f"|format(d.precio_unitario) }}</td>
-                    <td class="price">${{ "%.2f"|format(d.subtotal()) }}</td>
+                    <td class="c-prod">{{ d.producto.nombre }}</td>
+                    <td class="c-qty">{{ d.cantidad }}</td>
+                    <td class="c-price">${{ "%.2f"|format(d.precio_unitario) }}</td>
+                    <td class="c-sub">${{ "%.2f"|format(d.subtotal()) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <div class="comprobante-divider"></div>
+        <div class="ticket-rule-dashed"></div>
 
-        <div class="comprobante-total">
-            <div class="total-row">
-                <span class="total-label">Método de pago:</span>
-                <span class="total-value metodo">{{ pago.metodo_pago|capitalize }}</span>
-            </div>
-            <div class="total-row grand-total">
-                <span class="total-label">TOTAL:</span>
-                <span class="total-value">${{ "%.2f"|format(pago.monto) }}</span>
-            </div>
+        <div class="ticket-line">
+            <span>Método de pago:</span>
+            <span>{{ pago.metodo_pago|capitalize }}</span>
+        </div>
+        <div class="ticket-grand">
+            <span class="lbl">TOTAL:</span>
+            <span>${{ "%.2f"|format(pago.monto) }}</span>
         </div>
 
-        <div class="comprobante-footer">
-            <hr>
-            <p class="text-center">{{ mensaje_ticket }}</p>
-        </div>
+        <div class="ticket-footer">{{ mensaje_ticket }}</div>
     </div>
 
     <div class="text-center mt-3 no-print">
@@ -90,7 +80,7 @@
         </a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
     <script>
         window.onafterprint = function() { window.location.href = '{{ url_for("index") }}'; };
     </script>
