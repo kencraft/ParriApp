@@ -76,16 +76,6 @@
                         </div>
                     </div>
 
-                    <div class="mb-3" id="quickBilletes">
-                        <label class="form-label small text-muted mb-1">Montos rápidos:</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="setMonto({{ pedido.total }})">Exacto (${{ "%.2f"|format(pedido.total) }})</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(10000)">$10.000</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(20000)">$20.000</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(50000)">$50.000</button>
-                        </div>
-                    </div>
-
                     <div id="vueltoContainer" class="alert alert-success d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-success bg-success bg-opacity-10">
                         <div>
                             <span class="fs-6 fw-bold text-success text-uppercase"><i class="bi bi-cash me-2"></i>Vuelto / Cambio:</span>
@@ -119,6 +109,12 @@
     const vueltoContainer = document.getElementById('vueltoContainer');
 
     function calcularVuelto() {
+        if (selectMetodo.value !== 'efectivo') {
+            vueltoContainer.style.display = 'none';
+            return;
+        }
+
+        vueltoContainer.style.display = 'flex';
         const recibido = parseFloat(inputMonto.value) || 0;
         const vuelto = recibido - totalPedido;
 
@@ -134,18 +130,9 @@
         }
     }
 
-    function setMonto(valor) {
-        if (valor < totalPedido) valor = totalPedido;
-        inputMonto.value = valor;
-        calcularVuelto();
-    }
-
     selectMetodo.addEventListener('change', function() {
         if (this.value !== 'efectivo') {
             inputMonto.value = totalPedido;
-            document.getElementById('quickBilletes').style.display = 'none';
-        } else {
-            document.getElementById('quickBilletes').style.display = 'block';
         }
         calcularVuelto();
     });
