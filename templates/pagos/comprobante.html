@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="ticket">
-        <div class="ticket-brand">PARRI</div>
+        <div class="ticket-logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
         <div class="ticket-doc">COMPROBANTE DE PAGO</div>
         <div class="ticket-sub">Original</div>
 
@@ -38,17 +38,17 @@
         <table class="ticket-table">
             <thead>
                 <tr>
-                    <th class="c-prod">Producto</th>
-                    <th class="c-qty">Cant</th>
-                    <th class="c-price">Precio</th>
-                    <th class="c-sub">Subtotal</th>
+                    <th class="c-qty">CANT</th>
+                    <th class="c-prod">PRODUCTO</th>
+                    <th class="c-price">PRECIO</th>
+                    <th class="c-sub">SUBTOTAL</th>
                 </tr>
             </thead>
             <tbody>
                 {% for d in pago.pedido.detalles %}
                 <tr>
-                    <td class="c-prod">{{ d.producto.nombre }}</td>
                     <td class="c-qty">{{ d.cantidad }}</td>
+                    <td class="c-prod">{{ d.producto.nombre }}</td>
                     <td class="c-price">${{ "%.2f"|format(d.precio_unitario) }}</td>
                     <td class="c-sub">${{ "%.2f"|format(d.subtotal()) }}</td>
                 </tr>
