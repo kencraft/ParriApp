@@ -12,9 +12,9 @@
     margin: 4px auto;
     padding: 0 1mm 2mm 2mm;
     box-sizing: border-box;
-    font-family: "Courier New", "Lucida Console", monospace;
-    font-size: 12px;
-    line-height: 1.3;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
     color: #000;
     background: #fff;
     -webkit-print-color-adjust: exact;
@@ -45,15 +45,15 @@
 
 /* Encabezado */
 .ticket-brand {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     text-align: center;
     line-height: 1.1;
 }
 .ticket-doc {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 900;
     text-align: center;
     margin-top: 2px;
@@ -122,8 +122,8 @@
 .ticket-table .c-qty { text-align: center; width: 10%; }
 .ticket-table .c-prod { width: 36%; }
 .ticket-table .c-note { width: 42%; font-style: italic; font-size: 10px; }
-.ticket-table .c-price { text-align: right; width: 26%; white-space: nowrap; }
-.ticket-table .c-sub { text-align: right; width: 28%; white-space: nowrap; }
+.ticket-table .c-price { text-align: right; width: 26%; white-space: nowrap; font-weight: 600; }
+.ticket-table .c-sub { text-align: right; width: 28%; white-space: nowrap; font-weight: 700; }
 
 /* Totales */
 .ticket-line {
@@ -137,7 +137,7 @@
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
     margin-top: 2px;
 }
@@ -145,7 +145,7 @@
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 900;
     border-top: 3px solid #000;
     border-bottom: 3px solid #000;
