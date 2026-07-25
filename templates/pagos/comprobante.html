@@ -64,16 +64,6 @@
             <span class="lbl">TOTAL:</span>
             <span>${{ "%.2f"|format(pago.monto) }}</span>
         </div>
-        {% if pago.metodo_pago == 'efectivo' and pago.monto_recibido and pago.monto_recibido > pago.monto %}
-        <div class="ticket-line" style="margin-top:3px;">
-            <span>Abonó:</span>
-            <span>${{ "%.2f"|format(pago.monto_recibido) }}</span>
-        </div>
-        <div class="ticket-line">
-            <span class="lbl">Vuelto:</span>
-            <span class="lbl">${{ "%.2f"|format(pago.vuelto or 0) }}</span>
-        </div>
-        {% endif %}
 
         <div class="ticket-footer">{{ mensaje_ticket }}</div>
     </div>

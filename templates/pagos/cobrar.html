@@ -76,7 +76,7 @@
                         </div>
                     </div>
 
-                    <div id="vueltoContainer" class="alert alert-success d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-success bg-success bg-opacity-10">
+                    <div id="vueltoContainer" class="alert alert-success d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-success bg-success bg-opacity-10 d-none">
                         <div>
                             <span class="fs-6 fw-bold text-success text-uppercase"><i class="bi bi-cash me-2"></i>Vuelto / Cambio:</span>
                             <small class="d-block text-muted">A entregar al cliente</small>
@@ -110,11 +110,10 @@
 
     function calcularVuelto() {
         if (selectMetodo.value !== 'efectivo') {
-            vueltoContainer.style.display = 'none';
+            vueltoContainer.classList.add('d-none');
             return;
         }
 
-        vueltoContainer.style.display = 'flex';
         const recibido = parseFloat(inputMonto.value) || 0;
         const vuelto = recibido - totalPedido;
 
@@ -128,6 +127,7 @@
             vueltoContainer.className = "alert alert-danger d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-danger bg-danger bg-opacity-10";
             vueltoTexto.className = "fs-2 fw-bolder text-danger";
         }
+        vueltoContainer.classList.remove('d-none');
     }
 
     selectMetodo.addEventListener('change', function() {
