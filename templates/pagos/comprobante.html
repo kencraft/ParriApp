@@ -80,7 +80,12 @@
 
     <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
     <script>
-        window.onafterprint = function() { window.location.href = '{{ url_for("index") }}'; };
+        window.onload = function() {
+            window.print();
+        };
+        window.onafterprint = function() {
+            window.location.href = "{{ url_for('index') }}";
+        };
     </script>
 </body>
 </html>
