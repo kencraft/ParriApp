@@ -120,11 +120,11 @@
     overflow-wrap: break-word;
     word-break: normal;
 }
-.ticket-table .c-qty { text-align: center; width: 11%; padding-right: 3px; }
-.ticket-table .c-prod { width: 39%; padding-left: 2px; overflow-wrap: break-word; word-break: normal; white-space: normal; }
+.ticket-table .c-qty { text-align: left; width: 12%; padding-left: 1px; padding-right: 6px; }
+.ticket-table .c-prod { width: 38%; padding-left: 6px; overflow-wrap: break-word; word-break: normal; white-space: normal; }
 .ticket-table .c-note { width: 42%; font-style: italic; font-size: 10px; }
-.ticket-table .c-price { text-align: right; width: 24%; white-space: nowrap; font-weight: 600; }
-.ticket-table .c-sub { text-align: right; width: 26%; white-space: nowrap; font-weight: 700; }
+.ticket-table .c-price { text-align: right; width: 24%; white-space: nowrap; font-weight: 600; padding-right: 2px; }
+.ticket-table .c-sub { text-align: right; width: 26%; white-space: nowrap; font-weight: 700; padding-left: 2px; }
 
 /* Totales */
 .ticket-line {
