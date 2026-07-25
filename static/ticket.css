@@ -106,10 +106,10 @@
     table-layout: fixed;
 }
 .ticket-table th {
-    text-align: center;
+    text-align: center !important;
     border-top: 2px solid #000;
     border-bottom: 2px solid #000;
-    padding: 3px 1px;
+    padding: 4px 1px;
     font-size: 9.5px;
     font-weight: 900;
     letter-spacing: 0.3px;
@@ -120,11 +120,16 @@
     overflow-wrap: break-word;
     word-break: normal;
 }
-.ticket-table .c-qty { text-align: center; width: 14%; }
-.ticket-table .c-prod { text-align: left; width: 53%; padding-left: 2px; overflow-wrap: break-word; word-break: normal; white-space: normal; }
+.ticket-table .c-qty { width: 14%; }
+.ticket-table .c-prod { width: 53%; }
 .ticket-table .c-note { width: 42%; font-style: italic; font-size: 10px; }
-.ticket-table .c-price { text-align: right; width: 24%; white-space: nowrap; font-weight: 600; }
-.ticket-table .c-sub { text-align: right; width: 33%; white-space: nowrap; font-weight: 700; }
+.ticket-table .c-price { width: 24%; }
+.ticket-table .c-sub { width: 33%; }
+
+.ticket-table td.c-qty { text-align: center; }
+.ticket-table td.c-prod { text-align: left; padding-left: 2px; overflow-wrap: break-word; word-break: normal; white-space: normal; }
+.ticket-table td.c-price { text-align: right; white-space: nowrap; font-weight: 600; }
+.ticket-table td.c-sub { text-align: right; white-space: nowrap; font-weight: 700; }
 
 /* Totales */
 .ticket-line {
