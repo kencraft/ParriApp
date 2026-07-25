@@ -9,6 +9,6 @@ def editar():
         mensaje_ticket = request.form.get('mensaje_ticket', '').strip()
         Configuracion.establecer('mensaje_ticket', mensaje_ticket)
         flash('Configuración guardada correctamente', 'success')
-        return redirect(url_for('configuracion.editar'))
+        return redirect(url_for('index'))
     mensaje_ticket = Configuracion.obtener('mensaje_ticket', 'Gracias por su visita')
     return render_template('configuracion/editar.html', mensaje_ticket=mensaje_ticket)
