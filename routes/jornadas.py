@@ -39,4 +39,6 @@ def cerrar():
     jornada.activa = False
     db.session.commit()
     flash('Jornada laboral cerrada correctamente', 'success')
+    if request.form.get('imprimir_resumen') == '1':
+        return redirect(url_for('resumen', jornada_id=jornada.id))
     return redirect(url_for('index'))

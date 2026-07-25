@@ -26,7 +26,14 @@
                 {% else %}
                 <p class="text-success mb-4"><i class="bi bi-check-circle me-1"></i> No hay pedidos pendientes. Puede cerrar la jornada.</p>
                 <form method="POST" action="{{ url_for('jornadas.cerrar') }}">
-                    <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5" onclick="return confirm('¿Está seguro de cerrar la jornada? Esta acción no se puede deshacer.')">
+                    <div class="form-check form-switch d-inline-flex align-items-center gap-2 mb-4 bg-light p-3 rounded-3 border">
+                        <input class="form-check-input ms-0" type="checkbox" name="imprimir_resumen" value="1" id="imprimirResumenCheck" checked style="width:2.5em; height:1.25em; cursor:pointer;">
+                        <label class="form-check-label fw-semibold text-start" for="imprimirResumenCheck" style="cursor:pointer;">
+                            <i class="bi bi-printer me-1"></i> Imprimir resumen de jornada al cerrar
+                        </label>
+                    </div>
+                    <br>
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5" onclick="return confirm('¿Está seguro de cerrar la jornada?')">
                         <i class="bi bi-moon me-2"></i> Cerrar Jornada
                     </button>
                 </form>

@@ -151,6 +151,8 @@ class Pago(db.Model):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)
     jornada_id = db.Column(db.Integer, db.ForeignKey('jornadas.id'), nullable=True)
     monto = db.Column(db.Float, nullable=False)
+    monto_recibido = db.Column(db.Float, nullable=True)
+    vuelto = db.Column(db.Float, nullable=True)
     metodo_pago = db.Column(db.String(20), nullable=False)
     fecha_hora = db.Column(db.DateTime, nullable=False, default=datetime.now)
 

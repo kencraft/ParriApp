@@ -56,12 +56,11 @@
                 </div>
 
                 <form method="POST" action="{{ url_for('pagos.procesar', pedido_id=pedido.id) }}">
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label for="metodo_pago" class="form-label fw-medium">Método de pago <span class="text-danger">*</span></label>
                             <select name="metodo_pago" id="metodo_pago" class="form-select form-select-lg" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="efectivo">Efectivo</option>
+                                <option value="efectivo" selected>Efectivo</option>
                                 <option value="tarjeta">Tarjeta de crédito/débito</option>
                                 <option value="transferencia">Transferencia bancaria</option>
                                 <option value="qr">QR / Mercado Pago</option>
@@ -77,7 +76,25 @@
                         </div>
                     </div>
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                    <div class="mb-3" id="quickBilletes">
+                        <label class="form-label small text-muted mb-1">Montos rápidos:</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="setMonto({{ pedido.total }})">Exacto (${{ "%.2f"|format(pedido.total) }})</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(10000)">$10.000</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(20000)">$20.000</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="setMonto(50000)">$50.000</button>
+                        </div>
+                    </div>
+
+                    <div id="vueltoContainer" class="alert alert-success d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-success bg-success bg-opacity-10">
+                        <div>
+                            <span class="fs-6 fw-bold text-success text-uppercase"><i class="bi bi-cash me-2"></i>Vuelto / Cambio:</span>
+                            <small class="d-block text-muted">A entregar al cliente</small>
+                        </div>
+                        <span id="vueltoTexto" class="fs-1 fw-bolder text-success">$0.00</span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
                         <a href="{% if pedido.tipo == 'mesa' %}{{ url_for('pedidos.mesa', mesa_id=pedido.mesa_id) }}{% else %}{{ url_for('pedidos.mostrador') }}{% endif %}" 
                            class="btn btn-outline-secondary rounded-pill px-4">
                             <i class="bi bi-arrow-left me-1"></i> Volver
@@ -91,4 +108,49 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const totalPedido = {{ pedido.total }};
+    const inputMonto = document.getElementById('monto_recibido');
+    const selectMetodo = document.getElementById('metodo_pago');
+    const vueltoTexto = document.getElementById('vueltoTexto');
+    const vueltoContainer = document.getElementById('vueltoContainer');
+
+    function calcularVuelto() {
+        const recibido = parseFloat(inputMonto.value) || 0;
+        const vuelto = recibido - totalPedido;
+
+        if (vuelto >= 0) {
+            vueltoTexto.textContent = '$' + vuelto.toFixed(2);
+            vueltoContainer.className = "alert alert-success d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-success bg-success bg-opacity-10";
+            vueltoTexto.className = "fs-1 fw-bolder text-success";
+        } else {
+            const faltante = Math.abs(vuelto);
+            vueltoTexto.textContent = 'Faltan $' + faltante.toFixed(2);
+            vueltoContainer.className = "alert alert-danger d-flex align-items-center justify-content-between my-4 py-3 px-4 rounded-3 border border-danger bg-danger bg-opacity-10";
+            vueltoTexto.className = "fs-2 fw-bolder text-danger";
+        }
+    }
+
+    function setMonto(valor) {
+        if (valor < totalPedido) valor = totalPedido;
+        inputMonto.value = valor;
+        calcularVuelto();
+    }
+
+    selectMetodo.addEventListener('change', function() {
+        if (this.value !== 'efectivo') {
+            inputMonto.value = totalPedido;
+            document.getElementById('quickBilletes').style.display = 'none';
+        } else {
+            document.getElementById('quickBilletes').style.display = 'block';
+        }
+        calcularVuelto();
+    });
+
+    inputMonto.addEventListener('input', calcularVuelto);
+    calcularVuelto();
+</script>
 {% endblock %}

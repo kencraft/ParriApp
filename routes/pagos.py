@@ -30,10 +30,20 @@ def procesar(pedido_id):
         flash('Debe seleccionar un método de pago', 'danger')
         return redirect(url_for('pagos.cobrar', pedido_id=pedido_id))
     if monto_recibido is None or monto_recibido < pedido.total:
-        flash('El monto recibido es menor al total', 'danger')
+        flash('El monto ingresado debe ser igual o mayor al total del cobro', 'danger')
         return redirect(url_for('pagos.cobrar', pedido_id=pedido_id))
+    if metodo != 'efectivo':
+        monto_recibido = pedido.total
     jornada = JornadaLaboral.query.filter_by(activa=True).first()
-    pago = Pago(pedido_id=pedido.id, monto=pedido.total, metodo_pago=metodo, jornada_id=jornada.id if jornada else None)
+    vuelto = round(monto_recibido - pedido.total, 2) if (monto_recibido and monto_recibido >= pedido.total) else 0.0
+    pago = Pago(
+        pedido_id=pedido.id,
+        monto=pedido.total,
+        monto_recibido=monto_recibido,
+        vuelto=vuelto,
+        metodo_pago=metodo,
+        jornada_id=jornada.id if jornada else None
+    )
     db.session.add(pago)
     if pedido.tipo == 'mesa':
         mesa = Mesa.query.get(pedido.mesa_id)

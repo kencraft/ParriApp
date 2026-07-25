@@ -50,13 +50,17 @@ def index():
         })
     mesas_ocupadas = sum(1 for m in mesas if m.estado == 'ocupada')
     mesas_libres = sum(1 for m in mesas if m.estado == 'libre')
-    hoy = date.today()
-    pedidos_hoy = Pedido.query.filter(
-        db.func.date(Pedido.fecha_hora) == hoy
-    ).count()
-    total_hoy = db.session.query(db.func.sum(Pago.monto)).filter(
-        db.func.date(Pago.fecha_hora) == hoy
-    ).scalar() or 0
+    if jornada_activa:
+        pedidos_hoy = Pedido.query.filter(
+            Pedido.jornada_id == jornada_activa.id,
+            Pedido.estado == 'cerrado'
+        ).count()
+        total_hoy = db.session.query(db.func.sum(Pago.monto)).filter(
+            Pago.jornada_id == jornada_activa.id
+        ).scalar() or 0
+    else:
+        pedidos_hoy = 0
+        total_hoy = 0
     total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
         Mesa.estado == 'ocupada'
     ).scalar() or 0
@@ -130,6 +134,18 @@ def currency_filter(value):
 
 with app.app_context():
     db.create_all()
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE pagos ADD COLUMN monto_recibido FLOAT"))
+            conn.commit()
+    except Exception:
+        pass
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE pagos ADD COLUMN vuelto FLOAT"))
+            conn.commit()
+    except Exception:
+        pass
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
