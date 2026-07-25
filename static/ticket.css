@@ -1,4 +1,4 @@
-/* ticket.css — Impresión de tickets térmicos 80mm (ancho efectivo 72mm)
+/* ticket.css — Impresión de tickets térmicos 80mm (ancho efectivo 68-70mm)
    Autónomo: NO depende de Bootstrap. Funciona offline, en Chrome y en impresoras térmicas NCR 7197 / Epson TM. */
 
 @page {
@@ -7,10 +7,10 @@
 }
 
 .ticket {
-    width: 72mm;
-    max-width: 72mm;
-    margin: 12px auto;
-    padding: 2mm 2mm;
+    width: 68mm;
+    max-width: 68mm;
+    margin: 4px auto;
+    padding: 0 1mm 2mm 2mm;
     box-sizing: border-box;
     font-family: "Courier New", "Lucida Console", monospace;
     font-size: 12px;
@@ -30,10 +30,12 @@
 /* Logo */
 .ticket-logo {
     text-align: center;
-    margin-bottom: 6px;
+    margin-top: 0;
+    padding-top: 0;
+    margin-bottom: 4px;
 }
 .ticket-logo img {
-    max-width: 55mm;
+    max-width: 52mm;
     max-height: 25mm;
     height: auto;
     display: block;
@@ -178,5 +180,13 @@
         padding: 0 !important;
     }
     .no-print { display: none !important; }
-    .ticket { margin: 0; box-shadow: none; }
+    .ticket {
+        margin: 0 0 0 2.5mm !important;
+        padding-top: 0 !important;
+        box-shadow: none !important;
+    }
+    .ticket-logo, .ticket-logo img {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
 }
