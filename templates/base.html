@@ -32,6 +32,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('pagos.historial') }}"><i class="bi bi-credit-card me-2"></i>Pagos</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('listar_jornadas') }}"><i class="bi bi-calendar-week me-2"></i>Jornadas</a></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('jornadas.cerrar_form') }}"><i class="bi bi-moon me-2"></i>Cerrar Jornada</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('configuracion.editar') }}"><i class="bi bi-sliders me-2"></i>Configuración</a></li>
                         </ul>
                     </div>

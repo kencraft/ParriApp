@@ -44,6 +44,10 @@
         <span>{{ jornada.fecha_inicio.strftime('%d/%m/%Y') }}</span>
     </div>
     <div class="info-row">
+        <span>Estado:</span>
+        <span style="font-weight:bold;">{% if jornada.activa %}EN CURSO{% else %}CERRADA{% endif %}</span>
+    </div>
+    <div class="info-row">
         <span>Inicio:</span>
         <span>{{ jornada.fecha_inicio.strftime('%H:%M') }}</span>
     </div>
@@ -92,7 +96,19 @@
         </div>
     </div>
 
-    <div class="text-center mt-3 no-print">
+    <div class="text-center mt-3 no-print container" style="max-width:400px;">
+        {% if todas_jornadas and todas_jornadas|length > 1 %}
+        <div class="mb-3 text-start">
+            <label class="form-label small fw-bold">Ver otra jornada:</label>
+            <select class="form-select form-select-sm" onchange="if(this.value) window.location.href=this.value;">
+                {% for j in todas_jornadas %}
+                <option value="{{ url_for('resumen', jornada_id=j.id) }}" {% if j.id == jornada.id %}selected{% endif %}>
+                    Jornada #{{ j.id }} - {{ j.fecha_inicio.strftime('%d/%m/%Y %H:%M') }} ({% if j.activa %}EN CURSO{% else %}Cerrada{% endif %})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
         <button class="btn btn-primary btn-lg rounded-pill px-5" onclick="window.print()">
             <i class="bi bi-printer me-2"></i> Imprimir Resumen
         </button>

@@ -78,10 +78,13 @@ def resumen():
     if jornada_id:
         jornada = JornadaLaboral.query.get(jornada_id)
     if not jornada:
-        jornada = JornadaLaboral.query.filter_by(activa=False).order_by(JornadaLaboral.id.desc()).first()
+        jornada = JornadaLaboral.query.filter_by(activa=True).first()
     if not jornada:
-        flash('No hay jornadas cerradas para mostrar', 'warning')
+        jornada = JornadaLaboral.query.order_by(JornadaLaboral.id.desc()).first()
+    if not jornada:
+        flash('No hay jornadas registradas para mostrar', 'warning')
         return redirect(url_for('index'))
+    todas_jornadas = JornadaLaboral.query.order_by(JornadaLaboral.id.desc()).all()
     pedidos_jornada = Pedido.query.filter(
         Pedido.jornada_id == jornada.id,
         Pedido.estado == 'cerrado'
@@ -105,6 +108,7 @@ def resumen():
     mensaje_ticket = Configuracion.obtener('mensaje_ticket', 'Gracias por su visita')
     return render_template('resumen.html',
         jornada=jornada,
+        todas_jornadas=todas_jornadas,
         total_ventas=total_ventas,
         pagos_por_metodo=pagos_por_metodo,
         total_comensales=total_comensales,

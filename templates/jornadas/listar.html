@@ -32,9 +32,12 @@
                             {% endif %}
                         </td>
                         <td class="text-end pe-4">
-                            {% if not j.activa %}
-                            <a href="{{ url_for('resumen', jornada_id=j.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3" target="_blank">
+                            <a href="{{ url_for('resumen', jornada_id=j.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-1" target="_blank">
                                 <i class="bi bi-receipt me-1"></i> Resumen
+                            </a>
+                            {% if j.activa %}
+                            <a href="{{ url_for('jornadas.cerrar_form') }}" class="btn btn-danger btn-sm rounded-pill px-3">
+                                <i class="bi bi-moon me-1"></i> Cerrar Jornada
                             </a>
                             {% endif %}
                         </td>
