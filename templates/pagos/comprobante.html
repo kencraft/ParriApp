@@ -40,8 +40,7 @@
                 <tr>
                     <th class="c-qty">CANT</th>
                     <th class="c-prod">PRODUCTO</th>
-                    <th class="c-price">PRECIO</th>
-                    <th class="c-sub">SUBTOTAL</th>
+                    <th class="c-sub">PRECIO</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,7 +48,6 @@
                 <tr>
                     <td class="c-qty">{{ d.cantidad }}</td>
                     <td class="c-prod">{{ d.producto.nombre }}</td>
-                    <td class="c-price">${{ "%.2f"|format(d.precio_unitario) }}</td>
                     <td class="c-sub">${{ "%.2f"|format(d.subtotal()) }}</td>
                 </tr>
                 {% endfor %}
