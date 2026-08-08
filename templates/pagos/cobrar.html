@@ -40,7 +40,7 @@
                             {% for g in pedido.detalles_agrupados %}
                             <tr>
                                 <td>{{ g.producto.nombre }}</td>
-                                <td class="text-center">{{ g.cantidad }}</td>
+                                <td class="text-center">{{ g.cantidad|qty }}</td>
                                 <td class="text-end">${{ "%.2f"|format(g.precio_unitario) }}</td>
                                 <td class="text-end pe-3 fw-medium">${{ "%.2f"|format(g.subtotal) }}</td>
                             </tr>

@@ -132,6 +132,18 @@ def currency_filter(value):
         return '$0.00'
     return f'${value:,.2f}'
 
+@app.template_filter('qty')
+def qty_filter(value):
+    if value is None:
+        return '0'
+    try:
+        val = float(value)
+        if val.is_integer():
+            return str(int(val))
+        return f'{val:.3f}'.rstrip('0').rstrip('.')
+    except (ValueError, TypeError):
+        return str(value)
+
 with app.app_context():
     db.create_all()
     try:
@@ -146,6 +158,30 @@ with app.app_context():
             conn.commit()
     except Exception:
         pass
+    try:
+        with db.engine.connect() as conn:
+            info = conn.execute(db.text("PRAGMA table_info(detalles_pedido)")).fetchall()
+            for col in info:
+                if col[1] == 'cantidad' and 'INT' in str(col[2]).upper():
+                    conn.execute(db.text("""
+                        CREATE TABLE detalles_pedido_new (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            pedido_id INTEGER NOT NULL,
+                            producto_id INTEGER NOT NULL,
+                            cantidad REAL NOT NULL DEFAULT 1.0,
+                            precio_unitario REAL NOT NULL,
+                            notas VARCHAR(200),
+                            FOREIGN KEY(pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+                            FOREIGN KEY(producto_id) REFERENCES productos(id)
+                        )
+                    """))
+                    conn.execute(db.text("INSERT INTO detalles_pedido_new (id, pedido_id, producto_id, cantidad, precio_unitario, notas) SELECT id, pedido_id, producto_id, cantidad, precio_unitario, notas FROM detalles_pedido"))
+                    conn.execute(db.text("DROP TABLE detalles_pedido"))
+                    conn.execute(db.text("ALTER TABLE detalles_pedido_new RENAME TO detalles_pedido"))
+                    conn.commit()
+                    break
+    except Exception as e:
+        print("Migration error:", e)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

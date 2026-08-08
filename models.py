@@ -101,7 +101,7 @@ class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)
     producto_id = db.Column(db.Integer, db.ForeignKey('productos.id'), nullable=False)
-    cantidad = db.Column(db.Integer, nullable=False, default=1)
+    cantidad = db.Column(db.Float, nullable=False, default=1.0)
     precio_unitario = db.Column(db.Float, nullable=False)
     notas = db.Column(db.String(200))
 
@@ -109,7 +109,8 @@ class DetallePedido(db.Model):
         return self.cantidad * self.precio_unitario
 
     def __repr__(self):
-        return f'{self.cantidad}x {self.producto.nombre}'
+        cant_str = str(int(self.cantidad)) if self.cantidad and float(self.cantidad).is_integer() else str(self.cantidad)
+        return f'{cant_str}x {self.producto.nombre}'
 
 class JornadaLaboral(db.Model):
     __tablename__ = 'jornadas'

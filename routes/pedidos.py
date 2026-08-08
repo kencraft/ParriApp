@@ -62,23 +62,26 @@ def agregar(mesa_id):
         flash('No hay un pedido abierto en esta mesa', 'danger')
         return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
     producto_id = request.form.get('producto_id', type=int)
-    cantidad = request.form.get('cantidad', 1, type=int)
+    cantidad = request.form.get('cantidad', 1.0, type=float)
+    precio_custom = request.form.get('precio_unitario', type=float)
     notas = request.form.get('notas', '').strip()
     if not producto_id:
         flash('Debe seleccionar un producto', 'danger')
         return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
-    if cantidad < 1:
-        flash('La cantidad debe ser al menos 1', 'danger')
+    if cantidad is None or cantidad <= 0:
+        flash('La cantidad debe ser mayor a 0', 'danger')
         return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
     producto = Producto.query.get_or_404(producto_id)
+    precio_unitario = precio_custom if (precio_custom is not None and precio_custom >= 0) else producto.precio
     detalle = DetallePedido(
         pedido_id=pedido.id,
         producto_id=producto_id,
         cantidad=cantidad,
-        precio_unitario=producto.precio,
+        precio_unitario=precio_unitario,
         notas=notas
     )
     db.session.add(detalle)
+    db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
@@ -89,13 +92,18 @@ def agregar(mesa_id):
 def editar_detalle(detalle_id):
     detalle = DetallePedido.query.get_or_404(detalle_id)
     pedido = detalle.pedido
-    cantidad = request.form.get('cantidad', detalle.cantidad, type=int)
+    cantidad = request.form.get('cantidad', detalle.cantidad, type=float)
+    precio_custom = request.form.get('precio_unitario', type=float)
     notas = request.form.get('notas', '').strip()
-    if cantidad < 1:
-        flash('La cantidad debe ser al menos 1', 'danger')
+    if cantidad is None or cantidad <= 0:
+        flash('La cantidad debe ser mayor a 0', 'danger')
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id) if pedido.tipo == 'mostrador' else url_for('pedidos.mesa', mesa_id=pedido.mesa_id))
     detalle.cantidad = cantidad
-    detalle.notas = notas
+    if precio_custom is not None and precio_custom >= 0:
+        detalle.precio_unitario = precio_custom
+    if 'notas' in request.form:
+        detalle.notas = notas
+    db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
@@ -107,6 +115,7 @@ def eliminar_detalle(detalle_id):
     detalle = DetallePedido.query.get_or_404(detalle_id)
     pedido = detalle.pedido
     db.session.delete(detalle)
+    db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
@@ -156,23 +165,26 @@ def agregar_mostrador(pedido_id):
         flash('Pedido inválido', 'danger')
         return redirect(url_for('pedidos.mostrador'))
     producto_id = request.form.get('producto_id', type=int)
-    cantidad = request.form.get('cantidad', 1, type=int)
+    cantidad = request.form.get('cantidad', 1.0, type=float)
+    precio_custom = request.form.get('precio_unitario', type=float)
     notas = request.form.get('notas', '').strip()
     if not producto_id:
         flash('Debe seleccionar un producto', 'danger')
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
-    if cantidad < 1:
-        flash('La cantidad debe ser al menos 1', 'danger')
+    if cantidad is None or cantidad <= 0:
+        flash('La cantidad debe ser mayor a 0', 'danger')
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
     producto = Producto.query.get_or_404(producto_id)
+    precio_unitario = precio_custom if (precio_custom is not None and precio_custom >= 0) else producto.precio
     detalle = DetallePedido(
         pedido_id=pedido.id,
         producto_id=producto_id,
         cantidad=cantidad,
-        precio_unitario=producto.precio,
+        precio_unitario=precio_unitario,
         notas=notas
     )
     db.session.add(detalle)
+    db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
