@@ -30,7 +30,7 @@
                         <td>{% if pedido.tipo == 'mesa' %}Mesa {{ pedido.mesa.numero }}{% else %}Mostrador{% endif %}</td>
                         <td>{{ pedido.mozo.nombre }}</td>
                         <td class="text-muted small">{{ pedido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td class="text-end pe-2 fw-semibold">${{ "%.2f"|format(pedido.total) }}</td>
+                        <td class="text-end pe-2 fw-semibold">{{ pedido.total|currency }}</td>
                         <td class="text-center">
                             <span class="badge {% if pedido.estado == 'abierto' %}bg-warning text-dark{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
                                 {{ pedido.estado|capitalize }}

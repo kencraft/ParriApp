@@ -129,8 +129,10 @@ def listar_jornadas():
 @app.template_filter('currency')
 def currency_filter(value):
     if value is None:
-        return '$0.00'
-    return f'${value:,.2f}'
+        return '$0,00'
+    s = f'{value:,.2f}'
+    s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
+    return f'${s}'
 
 @app.template_filter('qty')
 def qty_filter(value):

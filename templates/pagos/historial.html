@@ -29,7 +29,7 @@
                         <td class="ps-4 fw-medium">#{{ pago.id }}</td>
                         <td><span class="badge bg-light text-dark border">#{{ pago.pedido.id }}</span></td>
                         <td>{% if pago.pedido.tipo == 'mesa' %}Mesa {{ pago.pedido.mesa.numero }}{% else %}Mostrador{% endif %}</td>
-                        <td class="text-end pe-2 fw-semibold text-primary">${{ "%.2f"|format(pago.monto) }}</td>
+                        <td class="text-end pe-2 fw-semibold text-primary">{{ pago.monto|currency }}</td>
                         <td class="text-center">
                             <span class="badge bg-info rounded-pill px-3 py-2">{{ pago.metodo_pago|capitalize }}</span>
                         </td>

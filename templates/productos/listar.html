@@ -29,7 +29,7 @@
                     <tr>
                         <td class="ps-4 fw-medium">{{ p.nombre }}</td>
                         <td><span class="badge bg-light text-dark border rounded-pill px-3 py-2">{{ p.categoria }}</span></td>
-                        <td class="text-end pe-2 fw-semibold text-primary">${{ "%.2f"|format(p.precio) }}</td>
+                        <td class="text-end pe-2 fw-semibold text-primary">{{ p.precio|currency }}</td>
                         <td class="text-center">
                             <span class="badge {% if p.activo %}bg-success{% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
                                 {{ 'Activo' if p.activo else 'Inactivo' }}

@@ -136,7 +136,7 @@
                             <option value="">Seleccionar producto...</option>
                             {% for p in productos %}
                             <option value="{{ p.id }}" data-precio="{{ p.precio }}" data-categoria="{{ p.categoria }}">
-                                {{ p.nombre }} - ${{ "%.2f"|format(p.precio) }}
+                                {{ p.nombre }} - {{ p.precio|currency }}
                             </option>
                             {% endfor %}
                         </select>
@@ -201,7 +201,7 @@
                                         </div>
                                     </form>
                                 </td>
-                                <td class="text-end pe-2 fw-semibold">${{ "%.2f"|format(d.subtotal()) }}</td>
+                                <td class="text-end pe-2 fw-semibold">{{ d.subtotal()|currency }}</td>
                                 <td class="text-end pe-4">
                                     <form method="POST" action="{{ url_for('pedidos.eliminar_detalle', detalle_id=d.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este item?')">
                                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" title="Eliminar">
@@ -215,7 +215,7 @@
                         <tfoot>
                             <tr class="table-active">
                                 <td colspan="3" class="ps-4"><strong>TOTAL</strong></td>
-                                <td class="text-end pe-2"><strong class="fs-5">${{ "%.2f"|format(pedido.total) }}</strong></td>
+                                <td class="text-end pe-2"><strong class="fs-5">{{ pedido.total|currency }}</strong></td>
                                 <td></td>
                             </tr>
                         </tfoot>
