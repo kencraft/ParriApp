@@ -151,11 +151,7 @@
                             <input type="number" name="precio_unitario" id="precio_unitario" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <label for="notas" class="form-label fw-medium">Notas</label>
-                        <input type="text" name="notas" id="notas" class="form-control" placeholder="Ej: sin sal, bien cocido...">
-                    </div>
-                    <button type="submit" id="btnAgregarProducto" class="btn btn-primary w-100 rounded-pill py-2">
+                    <button type="submit" id="btnAgregarProducto" class="btn btn-primary w-100 rounded-pill py-2 mt-2">
                         <i class="bi bi-plus-lg me-1"></i> Agregar al Pedido
                     </button>
                 </form>
@@ -183,7 +179,6 @@
                                 <th class="text-center">Cant</th>
                                 <th class="text-end">Precio</th>
                                 <th class="text-end pe-2">Subtotal</th>
-                                <th>Notas</th>
                                 <th class="text-end pe-4"></th>
                             </tr>
                         </thead>
@@ -207,7 +202,6 @@
                                     </form>
                                 </td>
                                 <td class="text-end pe-2 fw-semibold">${{ "%.2f"|format(d.subtotal()) }}</td>
-                                <td><small class="text-muted fst-italic">{{ d.notas or '' }}</small></td>
                                 <td class="text-end pe-4">
                                     <form method="POST" action="{{ url_for('pedidos.eliminar_detalle', detalle_id=d.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este item?')">
                                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" title="Eliminar">
@@ -222,7 +216,7 @@
                             <tr class="table-active">
                                 <td colspan="3" class="ps-4"><strong>TOTAL</strong></td>
                                 <td class="text-end pe-2"><strong class="fs-5">${{ "%.2f"|format(pedido.total) }}</strong></td>
-                                <td colspan="2"></td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>

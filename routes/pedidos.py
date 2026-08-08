@@ -64,7 +64,6 @@ def agregar(mesa_id):
     producto_id = request.form.get('producto_id', type=int)
     cantidad = request.form.get('cantidad', 1.0, type=float)
     precio_custom = request.form.get('precio_unitario', type=float)
-    notas = request.form.get('notas', '').strip()
     if not producto_id:
         flash('Debe seleccionar un producto', 'danger')
         return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
@@ -77,8 +76,7 @@ def agregar(mesa_id):
         pedido_id=pedido.id,
         producto_id=producto_id,
         cantidad=cantidad,
-        precio_unitario=precio_unitario,
-        notas=notas
+        precio_unitario=precio_unitario
     )
     db.session.add(detalle)
     db.session.flush()
@@ -94,15 +92,12 @@ def editar_detalle(detalle_id):
     pedido = detalle.pedido
     cantidad = request.form.get('cantidad', detalle.cantidad, type=float)
     precio_custom = request.form.get('precio_unitario', type=float)
-    notas = request.form.get('notas', '').strip()
     if cantidad is None or cantidad <= 0:
         flash('La cantidad debe ser mayor a 0', 'danger')
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id) if pedido.tipo == 'mostrador' else url_for('pedidos.mesa', mesa_id=pedido.mesa_id))
     detalle.cantidad = cantidad
     if precio_custom is not None and precio_custom >= 0:
         detalle.precio_unitario = precio_custom
-    if 'notas' in request.form:
-        detalle.notas = notas
     db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
@@ -167,7 +162,6 @@ def agregar_mostrador(pedido_id):
     producto_id = request.form.get('producto_id', type=int)
     cantidad = request.form.get('cantidad', 1.0, type=float)
     precio_custom = request.form.get('precio_unitario', type=float)
-    notas = request.form.get('notas', '').strip()
     if not producto_id:
         flash('Debe seleccionar un producto', 'danger')
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
@@ -180,8 +174,7 @@ def agregar_mostrador(pedido_id):
         pedido_id=pedido.id,
         producto_id=producto_id,
         cantidad=cantidad,
-        precio_unitario=precio_unitario,
-        notas=notas
+        precio_unitario=precio_unitario
     )
     db.session.add(detalle)
     db.session.flush()

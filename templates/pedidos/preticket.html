@@ -46,7 +46,7 @@
                 {% for g in pedido.detalles_agrupados %}
                 <tr>
                     <td class="c-qty">{{ g.cantidad|qty }}</td>
-                    <td class="c-prod">{{ g.producto.nombre }}{% if g.notas %}<br><span class="c-note">{{ g.notas }}</span>{% endif %}</td>
+                    <td class="c-prod">{{ g.producto.nombre }}</td>
                     <td class="c-sub">${{ "%.2f"|format(g.subtotal) }}</td>
                 </tr>
                 {% endfor %}

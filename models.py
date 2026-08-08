@@ -72,26 +72,19 @@ class Pedido(db.Model):
     def detalles_agrupados(self):
         grupos = {}
         for d in self.detalles:
-            key = d.producto_id
+            key = (d.producto_id, d.precio_unitario)
             if key in grupos:
                 grupos[key]['cantidad'] += d.cantidad
-                if d.notas and d.notas not in grupos[key]['notas_list']:
-                    grupos[key]['notas_list'].append(d.notas)
             else:
                 grupos[key] = {
                     'producto': d.producto,
                     'producto_id': d.producto_id,
                     'cantidad': d.cantidad,
                     'precio_unitario': d.precio_unitario,
-                    'subtotal': 0,
-                    'notas_list': [d.notas] if d.notas else []
+                    'subtotal': 0
                 }
             grupos[key]['subtotal'] = grupos[key]['cantidad'] * grupos[key]['precio_unitario']
-        result = []
-        for g in grupos.values():
-            g['notas'] = ', '.join(g['notas_list']) if g['notas_list'] else ''
-            result.append(g)
-        return result
+        return list(grupos.values())
 
     def __repr__(self):
         return f'Pedido #{self.id}'
@@ -103,7 +96,6 @@ class DetallePedido(db.Model):
     producto_id = db.Column(db.Integer, db.ForeignKey('productos.id'), nullable=False)
     cantidad = db.Column(db.Float, nullable=False, default=1.0)
     precio_unitario = db.Column(db.Float, nullable=False)
-    notas = db.Column(db.String(200))
 
     def subtotal(self):
         return self.cantidad * self.precio_unitario
