@@ -29,6 +29,16 @@ header.bg-dark {
 }
 
 /* === Mesa Cards === */
+.mesa-col {
+    flex: 0 0 auto;
+    width: 50%;
+}
+@media (min-width: 576px) {
+    .mesa-col { width: 33.3333%; }
+}
+@media (min-width: 992px) {
+    .mesa-col { width: 20%; }
+}
 .mesa-card {
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
@@ -36,7 +46,7 @@ header.bg-dark {
     border-width: 2px !important;
 }
 .mesa-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
 }
 .mesa-link {

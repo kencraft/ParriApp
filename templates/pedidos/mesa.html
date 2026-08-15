@@ -55,6 +55,13 @@
             </a>
             {% endif %}
         {% endif %}
+        {% if mesa.estado == 'ocupada' and pedido and not pedido.detalles %}
+        <form method="POST" action="{{ url_for('pedidos.liberar_mesa', mesa_id=mesa.id) }}" onsubmit="return confirm('¿Liberar la mesa {{ mesa.numero }}? Se descartará el pedido sin productos.')">
+            <button type="submit" class="btn btn-outline-danger rounded-pill px-3">
+                <i class="bi bi-door-closed me-1"></i> Liberar Mesa
+            </button>
+        </form>
+        {% endif %}
     </div>
 </div>
 

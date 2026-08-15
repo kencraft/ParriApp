@@ -17,6 +17,14 @@ def mesa(mesa_id):
     productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
     return render_template('pedidos/mesa.html', mesa=mesa, pedido=pedido, mozos=mozos, productos=productos)
 
+@pedidos_bp.route('/mesa/numero/<int:numero>')
+def mesa_por_numero(numero):
+    mesa = Mesa.query.filter_by(numero=numero).first()
+    if not mesa:
+        flash(f'No existe una mesa con el número {numero}', 'danger')
+        return redirect(url_for('index'))
+    return redirect(url_for('pedidos.mesa', mesa_id=mesa.id))
+
 @pedidos_bp.route('/mesa/<int:mesa_id>/abrir', methods=['POST'])
 def abrir(mesa_id):
     mesa = Mesa.query.get_or_404(mesa_id)
@@ -118,6 +126,24 @@ def eliminar_detalle(detalle_id):
     if pedido.tipo == 'mostrador':
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
     return redirect(url_for('pedidos.mesa', mesa_id=pedido.mesa_id))
+
+@pedidos_bp.route('/mesa/<int:mesa_id>/liberar', methods=['POST'])
+def liberar_mesa(mesa_id):
+    mesa = Mesa.query.get_or_404(mesa_id)
+    if mesa.estado != 'ocupada':
+        flash('La mesa no está ocupada', 'warning')
+        return redirect(url_for('index'))
+    pedido = Pedido.query.filter_by(mesa_id=mesa_id, estado='abierto').first()
+    if pedido and pedido.detalles:
+        flash('No se puede liberar una mesa con productos cargados', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    if pedido:
+        db.session.delete(pedido)
+    mesa.estado = 'libre'
+    mesa.comensales = None
+    db.session.commit()
+    flash('Mesa liberada', 'success')
+    return redirect(url_for('index'))
 
 @pedidos_bp.route('/mesa/<int:mesa_id>/preticket')
 def preticket(mesa_id):

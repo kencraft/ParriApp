@@ -40,16 +40,26 @@ def index():
             pedido_activo = Pedido.query.filter_by(mesa_id=m.id, estado='abierto').first()
             if pedido_activo and pedido_activo.mozo:
                 mozo_nombre = pedido_activo.mozo.nombre
+        preticket_impreso = pedido_activo.preticket_impreso if pedido_activo else False
+        if m.estado == 'ocupada' and preticket_impreso:
+            estado_visual = 'por_cobrar'
+        else:
+            estado_visual = m.estado
         mesas_data.append({
             'id': m.id,
             'numero': m.numero,
             'estado': m.estado,
+            'estado_visual': estado_visual,
             'comensales': m.comensales,
             'mozo': mozo_nombre,
-            'preticket_impreso': pedido_activo.preticket_impreso if pedido_activo else False
+            'preticket_impreso': preticket_impreso
         })
     mesas_ocupadas = sum(1 for m in mesas if m.estado == 'ocupada')
     mesas_libres = sum(1 for m in mesas if m.estado == 'libre')
+    mesas_por_cobrar = sum(1 for d in mesas_data if d['estado_visual'] == 'por_cobrar')
+    mesas_por_estado = {}
+    for d in mesas_data:
+        mesas_por_estado[d['estado_visual']] = mesas_por_estado.get(d['estado_visual'], 0) + 1
     if jornada_activa:
         pedidos_hoy = Pedido.query.filter(
             Pedido.jornada_id == jornada_activa.id,
@@ -68,6 +78,8 @@ def index():
         mesas=mesas_data,
         mesas_ocupadas=mesas_ocupadas,
         mesas_libres=mesas_libres,
+        mesas_por_cobrar=mesas_por_cobrar,
+        mesas_por_estado=mesas_por_estado,
         pedidos_hoy=pedidos_hoy,
         total_hoy=total_hoy,
         total_comensales=total_comensales,
@@ -131,6 +143,14 @@ def currency_filter(value):
     if value is None:
         return '$0,00'
     s = f'{value:,.2f}'
+    s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
+    return f'${s}'
+
+@app.template_filter('currency_int')
+def currency_int_filter(value):
+    if value is None:
+        return '$0'
+    s = f'{round(value):,}'
     s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
     return f'${s}'
 
