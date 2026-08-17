@@ -46,13 +46,15 @@
             {% if messages %}
                 <div class="container">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm mb-3" role="alert">
-                            <div class="d-flex align-items-center">
-                                <i class="bi {% if category == 'success' %}bi-check-circle-fill{% elif category == 'danger' %}bi-exclamation-triangle-fill{% elif category == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} me-2 fs-5"></i>
-                                <div>{{ message }}</div>
+                        {% if category in ['danger', 'error'] %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm mb-3" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                    <div>{{ message }}</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             {% endif %}

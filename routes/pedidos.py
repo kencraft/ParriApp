@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from models import db, Pedido, DetallePedido, Mesa, Mozo, Producto, JornadaLaboral, Configuracion
 from datetime import datetime
 
@@ -15,7 +15,8 @@ def mesa(mesa_id):
     pedido = Pedido.query.filter_by(mesa_id=mesa_id, estado='abierto').first()
     mozos = Mozo.query.filter_by(activo=True).all()
     productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
-    return render_template('pedidos/mesa.html', mesa=mesa, pedido=pedido, mozos=mozos, productos=productos)
+    focus_search = bool(session.pop('_focus_search', None))
+    return render_template('pedidos/mesa.html', mesa=mesa, pedido=pedido, mozos=mozos, productos=productos, focus_search=focus_search)
 
 @pedidos_bp.route('/mesa/numero/<int:numero>')
 def mesa_por_numero(numero):
@@ -91,6 +92,7 @@ def agregar(mesa_id):
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
+    session['_focus_search'] = True
     flash('Producto agregado', 'success')
     return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
 
@@ -177,7 +179,8 @@ def mesa_mostrador(pedido_id):
         return redirect(url_for('pedidos.mostrador'))
     mozos = Mozo.query.filter_by(activo=True).all()
     productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
-    return render_template('pedidos/mesa.html', mesa=None, pedido=pedido, mozos=mozos, productos=productos, mostrador=True)
+    focus_search = bool(session.pop('_focus_search', None))
+    return render_template('pedidos/mesa.html', mesa=None, pedido=pedido, mozos=mozos, productos=productos, mostrador=True, focus_search=focus_search)
 
 @pedidos_bp.route('/mostrador/<int:pedido_id>/agregar', methods=['POST'])
 def agregar_mostrador(pedido_id):
@@ -207,6 +210,7 @@ def agregar_mostrador(pedido_id):
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
+    session['_focus_search'] = True
     flash('Producto agregado', 'success')
     return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
 
