@@ -64,9 +64,9 @@
 
         <div class="divider"></div>
 
-        <div class="total-row">
-            <span>TOTAL VENDIDO</span>
-            <span>{{ total_ventas|currency }}</span>
+        <div class="total-row" style="display:block">
+            <div>TOTAL EN VENTAS</div>
+            <div>{{ total_ventas|currency }}</div>
         </div>
 
         <div class="divider"></div>
@@ -86,12 +86,11 @@
         <div class="divider"></div>
 
         <div class="info-row">
-            <span>Comensales actuales:</span>
+            <span>Comensales:</span>
             <span>{{ total_comensales }}</span>
         </div>
 
         <div class="footer">
-            <p style="margin:2px 0;">{{ mensaje_ticket }}</p>
             <p style="margin:2px 0;">{% if jornada.fecha_fin %}{{ jornada.fecha_fin.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ jornada.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}{% endif %}</p>
         </div>
     </div>
@@ -119,13 +118,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
-    <script>
-        window.onload = function() {
-            window.print();
-        };
-        window.onafterprint = function() {
-            window.location.href = "{{ url_for('index') }}";
-        };
-    </script>
 </body>
 </html>

@@ -17,7 +17,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-semibold mb-0">
-            <i class="bi bi-table me-2"></i> Mesa {{ mesa.numero }}
+            <i class="bi bi-fork-knife me-2"></i> Mesa {{ mesa.numero }}
             <span class="badge {% if mesa.estado == 'ocupada' %}bg-warning text-dark{% else %}bg-success{% endif %} ms-2 fs-6">
                 {{ mesa.estado|capitalize }}
             </span>
@@ -100,7 +100,7 @@
     <div class="col-md-8 col-lg-6">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body py-5">
-                <i class="bi bi-table display-1 text-success mb-3"></i>
+                <i class="bi bi-fork-knife display-1 text-success mb-3"></i>
                 <h3 class="fw-semibold mb-2">Mesa {{ mesa.numero }}</h3>
                 <form method="POST" action="{{ url_for('pedidos.abrir', mesa_id=mesa.id) }}">
                     <div class="row justify-content-center mb-3">
