@@ -78,6 +78,15 @@ def index():
     total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
         Mesa.estado == 'ocupada'
     ).scalar() or 0
+    from models import Mozo
+    mozos_mesas = db.session.query(
+        Mozo.nombre,
+        db.func.count(Pedido.id),
+        db.func.coalesce(db.func.sum(Mesa.comensales), 0)
+    ).join(Pedido, Pedido.mozo_id == Mozo.id
+    ).join(Mesa, Mesa.id == Pedido.mesa_id
+    ).filter(Pedido.estado == 'abierto', Pedido.tipo == 'mesa'
+    ).group_by(Mozo.id).order_by(Mozo.nombre).all()
     return render_template('index.html',
         mesas=mesas_data,
         mesas_ocupadas=mesas_ocupadas,
@@ -87,6 +96,7 @@ def index():
         pedidos_hoy=pedidos_hoy,
         total_hoy=total_hoy,
         total_comensales=total_comensales,
+        mozos_mesas=mozos_mesas,
         jornada_activa=jornada_activa
     )
 
