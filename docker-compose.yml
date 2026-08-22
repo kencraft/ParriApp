@@ -1,0 +1,19 @@
+services:
+  parri:
+    build: .
+    container_name: parri-restaurante
+    ports:
+      - "80:5000"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      TZ: America/Argentina/Buenos_Aires
+    volumes:
+      - ./instance:/app/instance
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
