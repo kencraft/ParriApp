@@ -12,8 +12,12 @@ from routes.configuracion import configuracion_bp
 from datetime import date
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'parri-restaurant-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///parri.db'
+_default_secret = 'parri-restaurant-dev-secret-change-me'
+_secret_env = os.environ.get('SECRET_KEY')
+if os.environ.get('FLASK_ENV') == 'production' and not _secret_env:
+    raise RuntimeError('SECRET_KEY must be set en modo produccion')
+app.config['SECRET_KEY'] = _secret_env or _default_secret
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///parri.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -170,6 +174,12 @@ with app.app_context():
     db.create_all()
     try:
         with db.engine.connect() as conn:
+            conn.execute(db.text("PRAGMA journal_mode=WAL"))
+            conn.commit()
+    except Exception as e:
+        print("WAL setup warning:", e)
+    try:
+        with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE pagos ADD COLUMN monto_recibido FLOAT"))
             conn.commit()
     except Exception:
@@ -206,4 +216,6 @@ with app.app_context():
         print("Migration error:", e)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug = os.environ.get('DEBUG') == '1'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=debug, host='0.0.0.0', port=port)

@@ -137,12 +137,16 @@
             </div>
             <div class="card-body p-4">
                 <div class="mb-3">
-                        <label for="productoBuscar" class="form-label fw-medium">Producto</label>
-                        <input type="text" id="productoBuscar" class="form-control" placeholder="Escribir para buscar por nombre o subcadena…" autocomplete="off">
-                        <small class="text-muted" id="productoContador"></small>
-                    </div>
-                    <form id="formAgregarProducto" method="POST" action="{% if mostrador %}{{ url_for('pedidos.agregar_mostrador', pedido_id=pedido.id) }}{% else %}{{ url_for('pedidos.agregar', mesa_id=mesa.id) }}{% endif %}">
+                    <label for="productoBuscar" class="form-label fw-medium">Buscar Producto</label>
+                    <input type="text" id="productoBuscar" class="form-control" placeholder="Escribir para buscar por nombre o subcadena…" autocomplete="off">
+                </div>
+                <form id="formAgregarProducto" method="POST" action="{% if mostrador %}{{ url_for('pedidos.agregar_mostrador', pedido_id=pedido.id) }}{% else %}{{ url_for('pedidos.agregar', mesa_id=mesa.id) }}{% endif %}">
                     <div class="mb-3">
+                        <label for="cantidad" class="form-label fw-medium">Cantidad</label>
+                        <input type="number" name="cantidad" id="cantidad" class="form-control" value="1" step="any" min="0.001" placeholder="Ej: 1 o 0.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="productoSelect" class="form-label fw-medium">Lista de Productos</label>
                         <select name="producto_id" id="productoSelect" class="form-select" required size="6">
                             <option value="" data-precio="">Seleccionar producto...</option>
                             {% for p in productos %}
@@ -151,16 +155,6 @@
                             </option>
                             {% endfor %}
                         </select>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label for="cantidad" class="form-label fw-medium">Cantidad</label>
-                            <input type="number" name="cantidad" id="cantidad" class="form-control" value="1" step="any" min="0.001" placeholder="Ej: 1 o 0.5" required>
-                        </div>
-                        <div class="col-6">
-                            <label for="precio_unitario" class="form-label fw-medium">Precio ($)</label>
-                            <input type="number" name="precio_unitario" id="precio_unitario" class="form-control" step="0.01" min="0" placeholder="0.00" required>
-                        </div>
                     </div>
                     <button type="submit" id="btnAgregarProducto" class="btn btn-primary w-100 rounded-pill py-2 mt-2">
                         <i class="bi bi-plus-lg me-1"></i> Agregar al Pedido
@@ -266,8 +260,6 @@
 <script>
     const productoSelect = document.getElementById('productoSelect');
     const productoBuscar = document.getElementById('productoBuscar');
-    const productoContador = document.getElementById('productoContador');
-    const precioInput = document.getElementById('precio_unitario');
     const cantidadInput = document.getElementById('cantidad');
     const formAgregar = document.getElementById('formAgregarProducto');
 
@@ -275,19 +267,9 @@
         return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    function pintarContador(coincidencias) {
-        if (!productoContador) return;
-        if (!coincidencias) {
-            productoContador.textContent = 'Sin coincidencias';
-        } else {
-            productoContador.textContent = coincidencias + (coincidencias === 1 ? ' producto' : ' productos');
-        }
-    }
-
     function filtrarProductos() {
         if (!productoSelect || !productoBuscar) return;
         const q = normalizar(productoBuscar.value.trim());
-        let visibles = 0;
         let primerIndice = -1;
         for (let i = 0; i < productoSelect.options.length; i++) {
             const opt = productoSelect.options[i];
@@ -298,14 +280,14 @@
             const nombre = opt.dataset.nombre || '';
             const match = !q || nombre.indexOf(q) !== -1;
             opt.hidden = !match;
-            if (match && opt.value !== '') {
-                visibles += 1;
-                if (primerIndice === -1) primerIndice = i;
+            if (match && opt.value !== '' && primerIndice === -1) {
+                primerIndice = i;
             }
         }
-        pintarContador(visibles);
-        if (q && primerIndice !== -1 && !productoSelect.value) {
-            productoSelect.selectedIndex = primerIndice;
+        if (q && primerIndice !== -1) {
+            if (!productoSelect.value || productoSelect.options[productoSelect.selectedIndex].hidden) {
+                productoSelect.selectedIndex = primerIndice;
+            }
         } else if (!q) {
             for (let i = 0; i < productoSelect.options.length; i++) {
                 if (!productoSelect.options[i].hidden) {
@@ -314,59 +296,66 @@
                 }
             }
         }
-        if (productoSelect.selectedIndex >= 0) {
-            const opt = productoSelect.options[productoSelect.selectedIndex];
-            if (opt && opt.value && precioInput && opt.dataset.precio) {
-                precioInput.value = parseFloat(opt.dataset.precio).toFixed(2);
-            }
-        }
     }
 
-    if (productoSelect && precioInput) {
-        productoSelect.addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            if (opt && opt.value && opt.dataset.precio) {
-                precioInput.value = parseFloat(opt.dataset.precio).toFixed(2);
-            } else {
-                precioInput.value = '';
+    // 1. Tecla ENTER / Abajo en Búsqueda -> Pasa a Cantidad
+    if (productoBuscar) {
+        productoBuscar.addEventListener('input', filtrarProductos);
+        productoBuscar.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (cantidadInput) {
+                    cantidadInput.focus();
+                    cantidadInput.select();
+                } else if (productoSelect) {
+                    productoSelect.focus();
+                }
+            } else if (e.key === 'ArrowDown' && productoSelect) {
+                e.preventDefault();
+                productoSelect.focus();
+            }
+        });
+    }
+
+    // 2. Tecla ENTER en Cantidad -> Pasa a la Lista Filtrada (productoSelect)
+    if (cantidadInput) {
+        cantidadInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (productoSelect) {
+                    if (!productoSelect.value || productoSelect.options[productoSelect.selectedIndex].hidden) {
+                        for (let i = 0; i < productoSelect.options.length; i++) {
+                            if (productoSelect.options[i].value !== '' && !productoSelect.options[i].hidden) {
+                                productoSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    productoSelect.focus();
+                }
+            }
+        });
+    }
+
+    // 3. Tecla ENTER / Doble click en Lista Filtrada -> Agrega al pedido
+    if (productoSelect) {
+        productoSelect.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (productoSelect.value && formAgregar) {
+                    if (formAgregar.reportValidity()) {
+                        formAgregar.submit();
+                    }
+                }
             }
         });
         productoSelect.addEventListener('dblclick', function(e) {
             const opt = this.options[this.selectedIndex];
             if (!opt || !opt.value) return;
-            if (formAgregar) {
+            if (formAgregar && formAgregar.reportValidity()) {
                 e.preventDefault();
                 formAgregar.submit();
             }
-        });
-    }
-
-    if (productoBuscar) {
-        productoBuscar.addEventListener('input', filtrarProductos);
-        productoBuscar.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowDown' && productoSelect) {
-                e.preventDefault();
-                productoSelect.focus();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (productoSelect && productoSelect.value && formAgregar) {
-                    formAgregar.submit();
-                }
-            }
-        });
-    }
-
-    if (formAgregar) {
-        const inputs = formAgregar.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (formAgregar.reportValidity()) {
-                        formAgregar.submit();
-                    }
-                }
-            });
         });
     }
 
@@ -375,10 +364,13 @@
     {% if focus_search %}
     if (productoBuscar) {
         if (productoSelect) productoSelect.selectedIndex = 0;
-        if (precioInput) precioInput.value = '';
         if (cantidadInput) cantidadInput.value = 1;
         productoBuscar.value = '';
         filtrarProductos();
+        productoBuscar.focus();
+    }
+    {% else %}
+    if (productoBuscar) {
         productoBuscar.focus();
     }
     {% endif %}
