@@ -85,6 +85,20 @@
 
         <div class="divider"></div>
 
+        <div style="font-weight:bold; margin-bottom:4px;">Por tipo de venta:</div>
+        {% if ventas_por_tipo %}
+            {% for tipo, monto, cant in ventas_por_tipo %}
+            <div class="metodo-row">
+                <span>{{ tipo|capitalize }} ({{ cant }})</span>
+                <span>{{ monto|currency }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="info-row"><span style="font-style:italic">Sin ventas registradas</span></div>
+        {% endif %}
+
+        <div class="divider"></div>
+
         <div class="info-row">
             <span>Comensales:</span>
             <span>{{ total_comensales }}</span>

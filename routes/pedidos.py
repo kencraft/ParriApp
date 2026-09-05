@@ -129,6 +129,65 @@ def eliminar_detalle(detalle_id):
         return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
     return redirect(url_for('pedidos.mesa', mesa_id=pedido.mesa_id))
 
+@pedidos_bp.route('/mesa/<int:mesa_id>/mover', methods=['GET', 'POST'])
+def mover_productos(mesa_id):
+    mesa_origen = Mesa.query.get_or_404(mesa_id)
+    pedido_origen = Pedido.query.filter_by(mesa_id=mesa_id, estado='abierto').first()
+    if not pedido_origen:
+        flash('No hay un pedido abierto en esta mesa', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    if request.method == 'GET':
+        mesas_libres = Mesa.query.filter(Mesa.estado == 'libre', Mesa.id != mesa_id).order_by(Mesa.numero).all()
+        return render_template('pedidos/mover.html', mesa=mesa_origen, pedido=pedido_origen, mesas_libres=mesas_libres)
+    mesa_destino_id = request.form.get('mesa_destino_id', type=int)
+    detalle_ids = request.form.getlist('detalle_ids', type=int)
+    if not mesa_destino_id:
+        flash('Debe seleccionar una mesa destino', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    if not detalle_ids:
+        flash('Debe seleccionar al menos un producto para mover', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    if mesa_destino_id == mesa_id:
+        flash('La mesa destino debe ser distinta a la mesa origen', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    mesa_destino = Mesa.query.get_or_404(mesa_destino_id)
+    if mesa_destino.estado != 'libre':
+        flash(f'La mesa {mesa_destino.numero} no está libre', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    detalles_a_mover = [d for d in pedido_origen.detalles if d.id in detalle_ids]
+    if not detalles_a_mover:
+        flash('Los productos seleccionados no pertenecen al pedido de esta mesa', 'danger')
+        return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+    if len(detalles_a_mover) == len(pedido_origen.detalles):
+        pedido_origen.mesa_id = mesa_destino_id
+        pedido_origen.preticket_impreso = False
+        mesa_destino.comensales = mesa_origen.comensales
+        mesa_origen.comensales = None
+        mesa_origen.estado = 'libre'
+        mesa_destino.estado = 'ocupada'
+        db.session.commit()
+        flash(f'Pedido completo movido de Mesa {mesa_origen.numero} a Mesa {mesa_destino.numero}', 'success')
+    else:
+        pedido_destino = Pedido(
+            mesa_id=mesa_destino_id,
+            mozo_id=pedido_origen.mozo_id,
+            jornada_id=pedido_origen.jornada_id,
+            tipo='mesa'
+        )
+        db.session.add(pedido_destino)
+        db.session.flush()
+        for d in detalles_a_mover:
+            d.pedido_id = pedido_destino.id
+        pedido_destino.preticket_impreso = False
+        mesa_destino.estado = 'ocupada'
+        db.session.flush()
+        pedido_origen.calcular_total()
+        pedido_origen.preticket_impreso = False
+        pedido_destino.calcular_total()
+        db.session.commit()
+        flash(f'{len(detalles_a_mover)} producto(s) movido(s) de Mesa {mesa_origen.numero} a Mesa {mesa_destino.numero}', 'success')
+    return redirect(url_for('pedidos.mesa', mesa_id=mesa_id))
+
 @pedidos_bp.route('/mesa/<int:mesa_id>/liberar', methods=['POST'])
 def liberar_mesa(mesa_id):
     mesa = Mesa.query.get_or_404(mesa_id)

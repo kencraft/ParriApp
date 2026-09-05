@@ -45,6 +45,9 @@
     </div>
     <div class="d-flex gap-2">
         {% if mesa.estado == 'ocupada' and pedido and pedido.detalles %}
+        <a href="{{ url_for('pedidos.mover_productos', mesa_id=mesa.id) }}" class="btn btn-outline-primary rounded-pill px-3">
+            <i class="bi bi-arrow-left-right me-1"></i> Mover
+        </a>
             {% if pedido.preticket_impreso %}
             <a href="{{ url_for('pagos.cobrar', pedido_id=pedido.id) }}" class="btn btn-success rounded-pill px-4">
                 <i class="bi bi-cash me-1"></i> Cobrar

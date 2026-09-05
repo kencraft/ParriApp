@@ -9,6 +9,7 @@ from routes.pagos import pagos_bp
 from routes.categorias import categorias_bp
 from routes.jornadas import jornadas_bp
 from routes.configuracion import configuracion_bp
+from routes.estadisticas import estadisticas_bp
 from datetime import date
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ app.register_blueprint(pagos_bp, url_prefix='/pagos')
 app.register_blueprint(categorias_bp, url_prefix='/categorias')
 app.register_blueprint(jornadas_bp, url_prefix='/jornadas')
 app.register_blueprint(configuracion_bp, url_prefix='/configuracion')
+app.register_blueprint(estadisticas_bp, url_prefix='/estadisticas')
 
 @app.route('/')
 def index():
@@ -127,6 +129,13 @@ def resumen():
     ).filter(
         Pago.jornada_id == jornada.id
     ).group_by(Pago.metodo_pago).all()
+    ventas_por_tipo = db.session.query(
+        Pedido.tipo, db.func.coalesce(db.func.sum(Pago.monto), 0), db.func.count(Pedido.id)
+    ).join(Pago, Pago.pedido_id == Pedido.id
+    ).filter(
+        Pedido.jornada_id == jornada.id,
+        Pedido.estado == 'cerrado'
+    ).group_by(Pedido.tipo).all()
     total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
         Mesa.id.in_(db.session.query(Pedido.mesa_id).filter(
             Pedido.jornada_id == jornada.id,
@@ -141,6 +150,7 @@ def resumen():
         todas_jornadas=todas_jornadas,
         total_ventas=total_ventas,
         pagos_por_metodo=pagos_por_metodo,
+        ventas_por_tipo=ventas_por_tipo,
         total_comensales=total_comensales,
         cantidad_pedidos=cantidad_pedidos,
         mensaje_ticket=mensaje_ticket

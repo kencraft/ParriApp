@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Estadísticas - Parri{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-semibold mb-0"><i class="bi bi-bar-chart-line me-2"></i>Estadísticas</h3>
+        <p class="text-muted mb-0 small">Período: <span class="fw-medium">{{ periodo_label }}</span></p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if jornada %}
+        <a href="{{ url_for('resumen', jornada_id=jornada.id) }}" class="btn btn-outline-primary rounded-pill px-3">
+            <i class="bi bi-printer me-1"></i> Imprimir Resumen
+        </a>
+        {% endif %}
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+</div>
+
+{# Filtros #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-medium small">Modo de análisis:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn {% if modo == 'jornada' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('jornada')">Por Jornada</button>
+                        <button type="button" class="btn {% if modo == 'rango' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('rango')">Por Rango de Fechas</button>
+                    </div>
+                </div>
+                <form id="formFiltro" method="GET" action="{{ url_for('estadisticas.index') }}">
+                    <input type="hidden" name="modo" id="inputModo" value="{{ modo }}">
+                    <div id="filtroJornada" {% if modo != 'jornada' %}style="display:none"{% endif %}>
+                        <label class="form-label small fw-medium mb-1">Jornada</label>
+                        <select name="jornada_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                            {% for j in todas_jornadas %}
+                            <option value="{{ j.id }}" {% if jornada and j.id == jornada.id %}selected{% endif %}>
+                                Jornada #{{ j.id }} - {{ j.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}{% if j.activa %} (EN CURSO){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="filtroRango" {% if modo != 'rango' %}style="display:none"{% endif %}>
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label class="form-label small fw-medium mb-1">Desde</label>
+                                <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-medium mb-1">Hasta</label>
+                                <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
+                                    <i class="bi bi-search me-1"></i> Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('estadisticas.index') }}">
+                    <input type="hidden" name="modo" value="{{ modo }}">
+                    {% if modo == 'jornada' and jornada %}
+                    <input type="hidden" name="jornada_id" value="{{ jornada.id }}">
+                    {% else %}
+                    <input type="hidden" name="fecha_desde" value="{{ fecha_desde }}">
+                    <input type="hidden" name="fecha_hasta" value="{{ fecha_hasta }}">
+                    {% endif %}
+                    <label class="form-label small fw-medium mb-1">
+                        <i class="bi bi-box me-1"></i>Consultar producto específico
+                    </label>
+                    <div class="d-flex gap-2">
+                        <select name="producto_id" class="form-select form-select-sm">
+                            <option value="">Seleccionar producto…</option>
+                            {% for p in productos %}
+                            <option value="{{ p.id }}" {% if producto_id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">Consultar</button>
+                    </div>
+                    {% if producto_info %}
+                    <div class="alert alert-info mt-2 mb-0 py-2 px-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ producto_info.nombre }}</strong>:
+                            vendidos <span class="fw-bold">{{ producto_info.cantidad|qty }}</span> unidad(es)
+                            — total <span class="fw-bold">{{ producto_info.monto|currency }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Tarjetas resumen #}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3">
+                    <i class="bi bi-cash-coin fs-3"></i>
+                </div>
+                <div>
+                    <p class="text-muted mb-1 small">Total en ventas</p>
+                    <h3 class="mb-0 fw-bold text-success">{{ total_ventas|currency_int }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                    <i class="bi bi-receipt fs-3"></i>
+                </div>
+                <div>
+                    <p class="text-muted mb-1 small">Pedidos cerrados</p>
+                    <h3 class="mb-0 fw-bold text-primary">{{ cantidad_pedidos }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+                <div>
+                    <p class="text-muted mb-1 small">Comensales</p>
+                    <h3 class="mb-0 fw-bold text-secondary">{{ total_comensales|int }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Gráficos #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-trophy me-2"></i>Top 10 productos por cantidad vendida</h6>
+            </div>
+            <div class="card-body">
+                {% if top_productos %}
+                <canvas id="chartTopProductos" height="220"></canvas>
+                {% else %}
+                <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-shop me-2"></i>Mostrador vs Mesas</h6>
+            </div>
+            <div class="card-body">
+                {% if ventas_por_tipo %}
+                <canvas id="chartTiposVenta" height="220"></canvas>
+                {% else %}
+                <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-tags me-2"></i>Ventas por categoría</h6>
+            </div>
+            <div class="card-body">
+                {% if ventas_categoria %}
+                <canvas id="chartCategorias" height="220"></canvas>
+                {% else %}
+                <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-graph-up me-2"></i>Ventas por día</h6>
+            </div>
+            <div class="card-body">
+                {% if ventas_por_dia %}
+                <canvas id="chartVentasDia" height="220"></canvas>
+                {% else %}
+                <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+function cambiarModo(modo) {
+    const inputModo = document.getElementById('inputModo');
+    inputModo.value = modo;
+    document.getElementById('filtroJornada').style.display = (modo === 'jornada') ? '' : 'none';
+    document.getElementById('filtroRango').style.display = (modo === 'rango') ? '' : 'none';
+    if (modo === 'jornada') {
+        document.getElementById('formFiltro').submit();
+    }
+}
+
+const PARRI_COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d', '#6610f2', '#fd7e14', '#20c997', '#d63384'];
+
+{% if top_productos %}
+new Chart(document.getElementById('chartTopProductos'), {
+    type: 'bar',
+    data: {
+        labels: [{% for nombre, cant, monto in top_productos %}{{ nombre|tojson }},{% endfor %}],
+        datasets: [{
+            label: 'Cantidad vendida',
+            data: [{% for nombre, cant, monto in top_productos %}{{ cant }},{% endfor %}],
+            backgroundColor: PARRI_COLORS[0],
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+
+{% if ventas_por_tipo %}
+new Chart(document.getElementById('chartTiposVenta'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for tipo, monto, cant in ventas_por_tipo %}{% if tipo == 'mostrador' %}'Mostrador'{% else %}'Mesas'{% endif %},{% endfor %}],
+        datasets: [{
+            data: [{% for tipo, monto, cant in ventas_por_tipo %}{{ monto }},{% endfor %}],
+            backgroundColor: [PARRI_COLORS[4], PARRI_COLORS[0]],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+{% endif %}
+
+{% if ventas_categoria %}
+new Chart(document.getElementById('chartCategorias'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for nombre, monto in ventas_categoria %}{{ nombre|tojson }},{% endfor %}],
+        datasets: [{
+            data: [{% for nombre, monto in ventas_categoria %}{{ monto }},{% endfor %}],
+            backgroundColor: PARRI_COLORS,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+{% endif %}
+
+{% if ventas_por_dia %}
+new Chart(document.getElementById('chartVentasDia'), {
+    type: 'line',
+    data: {
+        labels: [{% for dia, monto in ventas_por_dia %}{{ dia|tojson }},{% endfor %}],
+        datasets: [{
+            label: 'Ventas ($)',
+            data: [{% for dia, monto in ventas_por_dia %}{{ monto }},{% endfor %}],
+            borderColor: PARRI_COLORS[1],
+            backgroundColor: 'rgba(25, 135, 84, 0.15)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
