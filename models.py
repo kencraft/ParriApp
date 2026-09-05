@@ -60,6 +60,7 @@ class Pedido(db.Model):
     estado = db.Column(db.String(20), nullable=False, default='abierto')
     total = db.Column(db.Float, default=0.0)
     tipo = db.Column(db.String(20), nullable=False, default='mesa')
+    comensales = db.Column(db.Integer, nullable=True)
     preticket_impreso = db.Column(db.Boolean, default=False)
     detalles = db.relationship('DetallePedido', backref='pedido', lazy=True, cascade='all, delete-orphan')
     pagos = db.relationship('Pago', backref='pedido', lazy=True, cascade='all, delete-orphan')

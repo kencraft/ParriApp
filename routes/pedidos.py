@@ -39,6 +39,7 @@ def abrir(mesa_id):
     pedido = Pedido(mesa_id=mesa_id, mozo_id=mozo_id, tipo='mesa', jornada_id=jornada.id if jornada else None)
     if comensales and comensales > 0:
         mesa.comensales = comensales
+        pedido.comensales = comensales
     mesa.estado = 'ocupada'
     db.session.add(pedido)
     db.session.commit()
@@ -58,8 +59,10 @@ def editar_mesa(mesa_id):
         pedido.mozo_id = mozo_id
     if comensales is not None and comensales > 0:
         mesa.comensales = comensales
+        pedido.comensales = comensales
     elif comensales is not None:
         mesa.comensales = None
+        pedido.comensales = None
     pedido.preticket_impreso = False
     db.session.commit()
     flash('Datos actualizados', 'success')

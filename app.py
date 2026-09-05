@@ -86,14 +86,16 @@ def index():
             Pedido.estado == 'abierto',
             Pedido.detalles.any()
         ).count()
+        total_comensales = db.session.query(db.func.coalesce(db.func.sum(Pedido.comensales), 0)).filter(
+            Pedido.jornada_id == jornada_activa.id,
+            Pedido.estado.in_(['abierto', 'cerrado'])
+        ).scalar() or 0
     else:
         pedidos_hoy = 0
         total_hoy = 0
         total_pendiente = 0
         pedidos_abiertos = 0
-    total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
-        Mesa.estado == 'ocupada'
-    ).scalar() or 0
+        total_comensales = 0
     from models import Mozo
     mozos_mesas = db.session.query(
         Mozo.nombre,
@@ -223,6 +225,22 @@ with app.app_context():
     try:
         with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE pagos ADD COLUMN vuelto FLOAT"))
+            conn.commit()
+    except Exception:
+        pass
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE pedidos ADD COLUMN comensales INTEGER"))
+            conn.commit()
+    except Exception:
+        pass
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text("""
+                UPDATE pedidos SET comensales = (
+                    SELECT comensales FROM mesas WHERE mesas.id = pedidos.mesa_id
+                ) WHERE estado = 'abierto' AND comensales IS NULL AND mesa_id IS NOT NULL
+            """))
             conn.commit()
     except Exception:
         pass
