@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request, flash, redirect, url_for
-from models import db, Mesa, Pedido, Pago, Configuracion
+from models import db, Mesa, Pedido, Pago, Configuracion, DetallePedido
 from routes.mesas import mesas_bp
 from routes.mozos import mozos_bp
 from routes.productos import productos_bp
@@ -74,9 +74,23 @@ def index():
         total_hoy = db.session.query(db.func.sum(Pago.monto)).filter(
             Pago.jornada_id == jornada_activa.id
         ).scalar() or 0
+        total_pendiente = db.session.query(
+            db.func.coalesce(db.func.sum(DetallePedido.cantidad * DetallePedido.precio_unitario), 0)
+        ).join(Pedido, DetallePedido.pedido_id == Pedido.id
+        ).filter(
+            Pedido.jornada_id == jornada_activa.id,
+            Pedido.estado == 'abierto'
+        ).scalar() or 0
+        pedidos_abiertos = Pedido.query.filter(
+            Pedido.jornada_id == jornada_activa.id,
+            Pedido.estado == 'abierto',
+            Pedido.detalles.any()
+        ).count()
     else:
         pedidos_hoy = 0
         total_hoy = 0
+        total_pendiente = 0
+        pedidos_abiertos = 0
     total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
         Mesa.estado == 'ocupada'
     ).scalar() or 0
@@ -97,6 +111,8 @@ def index():
         mesas_por_estado=mesas_por_estado,
         pedidos_hoy=pedidos_hoy,
         total_hoy=total_hoy,
+        total_pendiente=total_pendiente,
+        pedidos_abiertos=pedidos_abiertos,
         total_comensales=total_comensales,
         mozos_mesas=mozos_mesas,
         jornada_activa=jornada_activa

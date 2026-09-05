@@ -6,67 +6,117 @@
         <h3 class="fw-semibold mb-0">
             <i class="bi bi-arrow-left-right me-2"></i> Mover Productos — Mesa {{ mesa.numero }}
         </h3>
-        <p class="text-muted mb-0 small">
-            Seleccioná los productos y la mesa destino.
-            Si seleccionás todos, la mesa {{ mesa.numero }} quedará libre.
-        </p>
+        <p class="text-muted mb-0 small">Podés mover el pedido completo o seleccionar productos individuales.</p>
     </div>
     <a href="{{ url_for('pedidos.mesa', mesa_id=mesa.id) }}" class="btn btn-outline-secondary rounded-pill px-3">
         <i class="bi bi-arrow-left me-1"></i> Volver a la mesa
     </a>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="fw-semibold mb-0"><i class="bi bi-list-check me-2"></i>Productos del pedido</h5>
-        <span class="badge bg-secondary rounded-pill px-3 py-2">Total actual: {{ pedido.total|currency }}</span>
-    </div>
-    <div class="card-body p-0">
-        <form id="formMoverProductos" method="POST" action="{{ url_for('pedidos.mover_productos', mesa_id=mesa.id) }}" onsubmit="return validarMoverProductos();">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center ps-4" style="width:50px">
-                                <input class="form-check-input" type="checkbox" id="checkAll" title="Seleccionar todos" checked>
-                            </th>
-                            <th>Producto</th>
-                            <th class="text-center">Cant</th>
-                            <th class="text-end">Precio</th>
-                            <th class="text-end pe-4">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for d in pedido.detalles %}
-                        <tr>
-                            <td class="text-center ps-4">
-                                <input class="form-check-input detalle-check" type="checkbox" name="detalle_ids" value="{{ d.id }}" checked>
-                            </td>
-                            <td class="fw-medium">{{ d.producto.nombre }}</td>
-                            <td class="text-center">{{ d.cantidad|qty }}</td>
-                            <td class="text-end">{{ d.precio_unitario|currency }}</td>
-                            <td class="text-end pe-4 fw-semibold">{{ d.subtotal()|currency }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-3 border-top d-flex flex-wrap align-items-center gap-2">
-                <span class="text-muted small fw-medium">
-                    <i class="bi bi-box-arrow-right me-1"></i>Mover a:
+<!-- Mover pedido completo -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3 px-4">
+        <form method="POST" action="{{ url_for('pedidos.mover_completo', mesa_id=mesa.id) }}" id="formMoverCompleto"
+              onsubmit="return confirmarMoverCompleto();">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="fw-semibold text-dark">
+                    <i class="bi bi-arrow-right-circle me-1 text-primary"></i>Mover pedido completo
                 </span>
-                <select name="mesa_destino_id" id="mesaDestinoSelect" class="form-select form-select-sm" style="width:180px">
-                    <option value="">Seleccionar mesa…</option>
+                <span class="badge bg-light text-muted border px-2 py-1">{{ pedido.detalles|sum(attribute='cantidad')|round(1) }} unidad(es)</span>
+                <span class="mx-1 text-muted">→</span>
+                <select name="mesa_destino_id" class="form-select form-select-sm" style="width:160px" required>
+                    <option value="">Mesa destino…</option>
                     {% for m in mesas_libres %}
                     <option value="{{ m.id }}">Mesa {{ m.numero }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4" {% if not mesas_libres %}disabled{% endif %}>
-                    <i class="bi bi-check-lg me-1"></i> Mover seleccionados
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3" {% if not mesas_libres %}disabled{% endif %}>
+                    <i class="bi bi-check-lg me-1"></i> Mover todo
                 </button>
                 {% if not mesas_libres %}
-                <span class="text-muted small fst-italic">(No hay mesas libres disponibles)</span>
+                <span class="text-muted small fst-italic">No hay mesas libres</span>
                 {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<hr class="my-3">
+
+<!-- Mover por cantidad: listas duales -->
+<h5 class="fw-semibold mb-3"><i class="bi bi-arrow-left-right me-2"></i>Mover por cantidad</h5>
+
+<div class="row g-3 align-items-stretch">
+    <!-- Lista izquierda: disponibles -->
+    <div class="col-12 col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-2">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-list-ul me-1"></i> Disponibles en Mesa {{ mesa.numero }}</h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="listaIzquierda" class="list-group list-group-flush" style="min-height:200px;max-height:400px;overflow-y:auto">
+                    <div class="list-group-item text-center text-muted py-5 d-none" id="vaciaIzquierda">
+                        <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>Todos los productos fueron movidos
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones centrales -->
+    <div class="col-12 col-md-2 d-flex flex-column align-items-center justify-content-center gap-2 py-3">
+        <button class="btn btn-outline-primary btn-sm rounded-circle" id="btnDer1" title="Mover 1 unidad" disabled style="width:40px;height:40px">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <button class="btn btn-outline-primary btn-sm rounded-circle" id="btnDerAll" title="Mover todo" disabled style="width:40px;height:40px">
+            <i class="bi bi-chevron-double-right"></i>
+        </button>
+        <hr class="w-100 my-1">
+        <button class="btn btn-outline-secondary btn-sm rounded-circle" id="btnIzq1" title="Devolver 1 unidad" disabled style="width:40px;height:40px">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="btn btn-outline-secondary btn-sm rounded-circle" id="btnIzqAll" title="Devolver todo" disabled style="width:40px;height:40px">
+            <i class="bi bi-chevron-double-left"></i>
+        </button>
+    </div>
+
+    <!-- Lista derecha: a mover -->
+    <div class="col-12 col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-2">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-arrow-right-circle me-1"></i> A mover</h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="listaDerecha" class="list-group list-group-flush" style="min-height:200px;max-height:400px;overflow-y:auto">
+                    <div class="list-group-item text-center text-muted py-5" id="vaciaDerecha">
+                        <i class="bi bi-arrow-left-circle fs-2 d-block mb-2 text-muted"></i>Usá los botones &gt; o doble click para agregar productos
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmar movimiento -->
+<div class="card border-0 shadow-sm mt-3 d-none" id="panelConfirmar">
+    <div class="card-body py-3 px-4">
+        <form method="POST" action="{{ url_for('pedidos.mover_productos', mesa_id=mesa.id) }}" id="formMoverParcial"
+              onsubmit="return confirmarMoverParcial();">
+            <input type="hidden" name="movimientos" id="inputMovimientos">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-semibold"><i class="bi bi-box-arrow-right me-1"></i>Mover a:</span>
+                    <select name="mesa_destino_id" id="selectDestinoParcial" class="form-select form-select-sm" style="width:160px" required>
+                        <option value="">Mesa destino…</option>
+                        {% for m in mesas_libres %}
+                        <option value="{{ m.id }}">Mesa {{ m.numero }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="badge bg-primary rounded-pill px-3 py-2" id="resumenMovimiento">0 producto(s)</span>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm rounded-pill px-4" {% if not mesas_libres %}disabled{% endif %}>
+                    <i class="bi bi-check-lg me-1"></i> Confirmar movimiento
+                </button>
             </div>
         </form>
     </div>
@@ -75,38 +125,158 @@
 
 {% block scripts %}
 <script>
-    const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.addEventListener('change', function() {
-            document.querySelectorAll('.detalle-check').forEach(function(cb) {
-                cb.checked = checkAll.checked;
-            });
-        });
-    }
+// Líneas crudas del pedido (cada DetallePedido es una línea independiente)
+const lineasRaw = [];
+{% for d in pedido.detalles %}
+lineasRaw.push({
+    detalleId: {{ d.id }},
+    productoId: {{ d.producto_id }},
+    nombre: {{ d.producto.nombre|tojson }},
+    precio: {{ d.precio_unitario }},
+    cantidad: {{ d.cantidad }}
+});
+{% endfor %}
 
-    document.querySelectorAll('.detalle-check').forEach(function(cb) {
-        cb.addEventListener('change', function() {
-            if (!cb.checked && checkAll) {
-                checkAll.checked = false;
-            } else if (checkAll && document.querySelectorAll('.detalle-check:checked').length === document.querySelectorAll('.detalle-check').length) {
-                checkAll.checked = true;
-            }
-        });
+// Agrupar por (productoId, precio): líneas con precio editado distinto se muestran por separado
+const grupos = {};
+lineasRaw.forEach(l => {
+    const key = l.productoId + '_' + l.precio;
+    if (!grupos[key]) {
+        grupos[key] = { key: key, nombre: l.nombre, precio: l.precio, lineas: [] };
+    }
+    grupos[key].lineas.push({ detalleId: l.detalleId, total: l.cantidad, restante: l.cantidad });
+});
+const productos = Object.values(grupos);
+
+const EPS = 0.0001;
+function disponibles(p) { return p.lineas.reduce((s, l) => s + l.restante, 0); }
+function enDestino(p) { return p.lineas.reduce((s, l) => s + (l.total - l.restante), 0); }
+function fmtCant(n) { return Number(n.toFixed(2)).toString(); }
+
+// Referencia al DOM
+const listaIzq = document.getElementById('listaIzquierda');
+const listaDer = document.getElementById('listaDerecha');
+const vaciaIzq = document.getElementById('vaciaIzquierda');
+const vaciaDer = document.getElementById('vaciaDerecha');
+const panelConfirmar = document.getElementById('panelConfirmar');
+const btnDer1 = document.getElementById('btnDer1');
+const btnDerAll = document.getElementById('btnDerAll');
+const btnIzq1 = document.getElementById('btnIzq1');
+const btnIzqAll = document.getElementById('btnIzqAll');
+
+let selectedIzq = null; // key del grupo seleccionado en izquierda
+let selectedDer = null; // key del grupo seleccionado en derecha
+
+function renderListas() {
+    listaIzq.querySelectorAll('.list-group-item:not(#vaciaIzquierda)').forEach(el => el.remove());
+    listaDer.querySelectorAll('.list-group-item:not(#vaciaDerecha)').forEach(el => el.remove());
+
+    const itemsIzq = productos.filter(p => disponibles(p) > EPS);
+    const itemsDer = productos.filter(p => enDestino(p) > EPS);
+
+    itemsIzq.forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'list-group-item list-group-item-action py-2 px-3' + (selectedIzq === p.key ? ' active' : '');
+        el.title = 'Doble click para mover 1 unidad';
+        el.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-medium">${p.nombre}</span>
+                <span class="badge ${selectedIzq === p.key ? 'bg-light text-dark' : 'bg-primary'} rounded-pill">${fmtCant(disponibles(p))}</span>
+            </div>`;
+        el.addEventListener('click', () => { selectedIzq = p.key; selectedDer = null; renderListas(); });
+        el.addEventListener('dblclick', () => { selectedIzq = p.key; selectedDer = null; moverUna('izq'); });
+        listaIzq.appendChild(el);
     });
 
-    function validarMoverProductos() {
-        const seleccionados = document.querySelectorAll('.detalle-check:checked').length;
-        const destino = document.getElementById('mesaDestinoSelect');
-        if (!destino || !destino.value) {
-            alert('Seleccione una mesa destino.');
-            return false;
-        }
-        if (seleccionados === 0) {
-            alert('Seleccione al menos un producto para mover.');
-            return false;
-        }
-        const numeroDestino = destino.options[destino.selectedIndex].text.trim();
-        return confirm('¿Mover ' + seleccionados + ' producto(s) a ' + numeroDestino + '?');
+    itemsDer.forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'list-group-item list-group-item-action py-2 px-3' + (selectedDer === p.key ? ' active' : '');
+        el.title = 'Doble click para devolver 1 unidad';
+        el.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-medium">${p.nombre}</span>
+                <span class="badge ${selectedDer === p.key ? 'bg-light text-dark' : 'bg-success'} rounded-pill">${fmtCant(enDestino(p))}</span>
+            </div>`;
+        el.addEventListener('click', () => { selectedDer = p.key; selectedIzq = null; renderListas(); });
+        el.addEventListener('dblclick', () => { selectedDer = p.key; selectedIzq = null; moverUna('der'); });
+        listaDer.appendChild(el);
+    });
+
+    vaciaIzq.classList.toggle('d-none', itemsIzq.length > 0);
+    vaciaDer.classList.toggle('d-none', itemsDer.length > 0);
+    panelConfirmar.classList.toggle('d-none', itemsDer.length === 0);
+
+    btnDer1.disabled = !selectedIzq;
+    btnDerAll.disabled = !selectedIzq;
+    btnIzq1.disabled = !selectedDer;
+    btnIzqAll.disabled = !selectedDer;
+
+    const total = itemsDer.reduce((s, p) => s + enDestino(p), 0);
+    document.getElementById('resumenMovimiento').textContent = fmtCant(total) + ' unidad(es)';
+}
+
+// Mueve 1 unidad (o el resto si es menor a 1) de izquierda a derecha.
+// Consume de la primera línea con restante disponible.
+function moverUna(lista) {
+    if (lista === 'izq' && selectedIzq != null) {
+        const p = productos.find(x => x.key === selectedIzq);
+        if (!p) return;
+        const linea = p.lineas.find(l => l.restante > EPS);
+        if (linea) linea.restante = Math.max(0, linea.restante - Math.min(1, linea.restante));
+        if (disponibles(p) <= EPS) selectedIzq = null;
+    } else if (lista === 'der' && selectedDer != null) {
+        // Devuelve 1 unidad acreditando a la última línea de la que se consumió
+        const p = productos.find(x => x.key === selectedDer);
+        if (!p) return;
+        const linea = [...p.lineas].reverse().find(l => (l.total - l.restante) > EPS);
+        if (linea) linea.restante = Math.min(linea.total, linea.restante + Math.min(1, linea.total - linea.restante));
+        if (enDestino(p) <= EPS) selectedDer = null;
     }
+    renderListas();
+}
+
+// Mueve/devuelve todo el disponible del producto seleccionado
+function moverTodo(lista) {
+    if (lista === 'izq' && selectedIzq != null) {
+        const p = productos.find(x => x.key === selectedIzq);
+        if (p) { p.lineas.forEach(l => l.restante = 0); selectedIzq = null; }
+    } else if (lista === 'der' && selectedDer != null) {
+        const p = productos.find(x => x.key === selectedDer);
+        if (p) { p.lineas.forEach(l => l.restante = l.total); selectedDer = null; }
+    }
+    renderListas();
+}
+
+btnDer1.addEventListener('click', () => moverUna('izq'));
+btnDerAll.addEventListener('click', () => moverTodo('izq'));
+btnIzq1.addEventListener('click', () => moverUna('der'));
+btnIzqAll.addEventListener('click', () => moverTodo('der'));
+
+function confirmarMoverCompleto() {
+    const sel = document.querySelector('#formMoverCompleto select[name="mesa_destino_id"]');
+    if (!sel || !sel.value) { alert('Seleccioná una mesa destino.'); return false; }
+    const total = productos.reduce((s, p) => s + p.lineas.reduce((x, l) => x + l.total, 0), 0);
+    return confirm('¿Mover el pedido completo (' + fmtCant(total) + ' unidad(es)) a ' + sel.options[sel.selectedIndex].text.trim() + '?\nLa mesa {{ mesa.numero }} quedará libre.');
+}
+
+function confirmarMoverParcial() {
+    const itemsDer = productos.filter(p => enDestino(p) > EPS);
+    if (itemsDer.length === 0) { alert('No hay productos seleccionados para mover.'); return false; }
+    const sel = document.getElementById('selectDestinoParcial');
+    if (!sel || !sel.value) { alert('Seleccioná una mesa destino.'); return false; }
+    // Expandir grupos a movimientos por línea (detalle_id)
+    const movimientos = [];
+    itemsDer.forEach(p => {
+        p.lineas.forEach(l => {
+            const consumido = l.total - l.restante;
+            if (consumido > EPS) movimientos.push({ detalle_id: l.detalleId, cantidad: consumido });
+        });
+    });
+    document.getElementById('inputMovimientos').value = JSON.stringify(movimientos);
+    const total = movimientos.reduce((s, m) => s + m.cantidad, 0);
+    return confirm('¿Mover ' + fmtCant(total) + ' unidad(es) a ' + sel.options[sel.selectedIndex].text.trim() + '?');
+}
+
+renderListas();
 </script>
 {% endblock %}

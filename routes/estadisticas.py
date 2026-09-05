@@ -57,18 +57,31 @@ def index():
         jornadas_ids = [j.id for j in jornadas_rango]
         periodo_label = f'{fecha_desde.strftime("%d/%m/%Y")} a {fecha_hasta.strftime("%d/%m/%Y")} ({len(jornadas_ids)} jornada(s))'
 
-    # Pedidos cerrados dentro de las jornadas seleccionadas
+    # Pedidos cerrados y abiertos (en curso) dentro de las jornadas seleccionadas
     pedidos = Pedido.query.filter(
         Pedido.jornada_id.in_(jornadas_ids),
-        Pedido.estado == 'cerrado'
+        Pedido.estado.in_(['cerrado', 'abierto'])
     ).all()
     pedido_ids = [p.id for p in pedidos]
+    pedidos_cerrados_ids = [p.id for p in pedidos if p.estado == 'cerrado']
+    pedidos_abiertos_ids = [p.id for p in pedidos if p.estado == 'abierto']
 
-    # Totales generales
-    total_ventas = db.session.query(db.func.coalesce(db.func.sum(Pago.monto), 0)).filter(
-        Pago.pedido_id.in_(pedido_ids)
-    ).scalar() or 0
+    # Totales generales: cobrado (pagos registrados) + pendiente (pedidos en curso)
+    total_cobrado = 0
+    if pedidos_cerrados_ids:
+        total_cobrado = db.session.query(db.func.coalesce(db.func.sum(Pago.monto), 0)).filter(
+            Pago.pedido_id.in_(pedidos_cerrados_ids)
+        ).scalar() or 0
+    total_pendiente = 0
+    if pedidos_abiertos_ids:
+        total_pendiente = db.session.query(
+            db.func.coalesce(db.func.sum(DetallePedido.cantidad * DetallePedido.precio_unitario), 0)
+        ).filter(DetallePedido.pedido_id.in_(pedidos_abiertos_ids)
+        ).scalar() or 0
+    total_ventas = total_cobrado + total_pendiente
     cantidad_pedidos = len(pedidos)
+    cantidad_cerrados = len(pedidos_cerrados_ids)
+    cantidad_abiertos = len(pedidos_abiertos_ids)
     mesas_pedidos_ids = [p.mesa_id for p in pedidos if p.mesa_id]
     if mesas_pedidos_ids:
         total_comensales = db.session.query(db.func.coalesce(db.func.sum(Mesa.comensales), 0)).filter(
@@ -103,22 +116,23 @@ def index():
         ).order_by(db.func.sum(DetallePedido.cantidad * DetallePedido.precio_unitario).desc()
         ).all()
 
-    # Mostrador vs Mesas (monto y cantidad de pedidos)
+    # Mostrador vs Mesas (monto desde detalles: incluye pedidos en curso)
     ventas_por_tipo = db.session.query(
         Pedido.tipo,
-        db.func.coalesce(db.func.sum(Pago.monto), 0),
-        db.func.count(Pedido.id)
-    ).join(Pago, Pago.pedido_id == Pedido.id
-    ).filter(Pedido.jornada_id.in_(jornadas_ids), Pedido.estado == 'cerrado'
+        db.func.coalesce(db.func.sum(DetallePedido.cantidad * DetallePedido.precio_unitario), 0),
+        db.func.count(db.distinct(Pedido.id))
+    ).join(DetallePedido, DetallePedido.pedido_id == Pedido.id
+    ).filter(Pedido.jornada_id.in_(jornadas_ids), Pedido.estado.in_(['cerrado', 'abierto'])
     ).group_by(Pedido.tipo).all()
 
-    # Evolución de ventas por día
+    # Evolución de ventas por día (desde detalles: incluye pedidos en curso)
     ventas_por_dia = db.session.query(
-        db.func.date(Pago.fecha_hora),
-        db.func.sum(Pago.monto)
-    ).filter(Pago.pedido_id.in_(pedido_ids)
-    ).group_by(db.func.date(Pago.fecha_hora)
-    ).order_by(db.func.date(Pago.fecha_hora)
+        db.func.date(Pedido.fecha_hora),
+        db.func.sum(DetallePedido.cantidad * DetallePedido.precio_unitario)
+    ).join(DetallePedido, DetallePedido.pedido_id == Pedido.id
+    ).filter(Pedido.jornada_id.in_(jornadas_ids), Pedido.estado.in_(['cerrado', 'abierto'])
+    ).group_by(db.func.date(Pedido.fecha_hora)
+    ).order_by(db.func.date(Pedido.fecha_hora)
     ).all() if pedido_ids else []
 
     # Producto específico
@@ -149,7 +163,11 @@ def index():
         fecha_hasta=fecha_hasta.strftime('%Y-%m-%d') if fecha_hasta else '',
         periodo_label=periodo_label,
         total_ventas=total_ventas,
+        total_cobrado=total_cobrado,
+        total_pendiente=total_pendiente,
         cantidad_pedidos=cantidad_pedidos,
+        cantidad_cerrados=cantidad_cerrados,
+        cantidad_abiertos=cantidad_abiertos,
         total_comensales=total_comensales,
         top_productos=top_productos,
         ventas_categoria=ventas_categoria,

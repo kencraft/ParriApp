@@ -85,8 +85,13 @@
                 </div>
                 <div>
                     <p class="text-muted mb-1 small">Ventas Turno</p>
-                    <h3 class="mb-0 fw-bold text-info">{{ total_hoy|currency_int }}</h3>
-                    <small class="text-muted">{{ pedidos_hoy }} pedidos</small>
+                    <h3 class="mb-0 fw-bold text-info">{{ (total_hoy + total_pendiente)|currency_int }}</h3>
+                    <div class="d-flex flex-column gap-1 mt-1">
+                        <small class="text-muted">Cobrado: <span class="fw-semibold text-success">{{ total_hoy|currency_int }}</span> ({{ pedidos_hoy }} pedidos)</small>
+                        {% if total_pendiente > 0 %}
+                        <small class="text-muted">En mesas: <span class="fw-semibold text-warning">{{ total_pendiente|currency_int }}</span> ({{ pedidos_abiertos }} en curso)</small>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

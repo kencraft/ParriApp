@@ -4,7 +4,11 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-semibold mb-0"><i class="bi bi-bar-chart-line me-2"></i>Estadísticas</h3>
-        <p class="text-muted mb-0 small">Período: <span class="fw-medium">{{ periodo_label }}</span></p>
+        <p class="text-muted mb-0 small">Período: <span class="fw-medium">{{ periodo_label }}</span>
+            {% if cantidad_abiertos > 0 %}
+            <span class="badge bg-warning text-dark ms-2">Incluye {{ cantidad_abiertos }} pedido(s) en curso sin cobrar</span>
+            {% endif %}
+        </p>
     </div>
     <div class="d-flex gap-2">
         {% if jornada %}
@@ -108,6 +112,10 @@
                 <div>
                     <p class="text-muted mb-1 small">Total en ventas</p>
                     <h3 class="mb-0 fw-bold text-success">{{ total_ventas|currency_int }}</h3>
+                    <small class="text-muted">Cobrado: <span class="fw-semibold text-success">{{ total_cobrado|currency_int }}</span></small>
+                    {% if total_pendiente > 0 %}
+                    <br><small class="text-muted">En curso: <span class="fw-semibold text-warning">{{ total_pendiente|currency_int }}</span></small>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -119,8 +127,9 @@
                     <i class="bi bi-receipt fs-3"></i>
                 </div>
                 <div>
-                    <p class="text-muted mb-1 small">Pedidos cerrados</p>
+                    <p class="text-muted mb-1 small">Pedidos</p>
                     <h3 class="mb-0 fw-bold text-primary">{{ cantidad_pedidos }}</h3>
+                    <small class="text-muted">{{ cantidad_cerrados }} cerrados{% if cantidad_abiertos > 0 %} · <span class="fw-semibold text-warning">{{ cantidad_abiertos }} en curso</span>{% endif %}</small>
                 </div>
             </div>
         </div>
