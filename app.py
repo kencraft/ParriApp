@@ -38,31 +38,58 @@ def index():
     from models import JornadaLaboral
     jornada_activa = JornadaLaboral.query.filter_by(activa=True).first()
     mesas = Mesa.query.order_by(Mesa.numero).all()
+    #----------------
+    # Traer todos los pedidos abiertos de una sola vez
+    pedidos_abiertos = (
+        Pedido.query
+        .filter_by(estado="abierto")
+        .all()
+    )
+
+    pedidos_por_mesa = {
+        pedido.mesa_id: pedido
+        for pedido in pedidos_abiertos
+    }
+
     mesas_data = []
-    for m in mesas:
-        pedido_activo = None
-        mozo_nombre = None
-        if m.estado == 'ocupada':
-            pedido_activo = Pedido.query.filter_by(mesa_id=m.id, estado='abierto').first()
-            if pedido_activo and pedido_activo.mozo:
-                mozo_nombre = pedido_activo.mozo.nombre
-        preticket_impreso = pedido_activo.preticket_impreso if pedido_activo else False
-        if m.estado == 'ocupada' and preticket_impreso:
-            estado_visual = 'por_cobrar'
-        else:
-            estado_visual = m.estado
+
+    for mesa in mesas:
+        pedido = pedidos_por_mesa.get(mesa.id)
+
+        preticket_impreso = bool(
+            pedido and pedido.preticket_impreso
+        )
+
+        estado_visual = (
+            "por_cobrar"
+            if mesa.estado == "ocupada" and preticket_impreso
+            else mesa.estado
+        )
+
         mesas_data.append({
-            'id': m.id,
-            'numero': m.numero,
-            'estado': m.estado,
-            'estado_visual': estado_visual,
-            'comensales': m.comensales,
-            'mozo': mozo_nombre,
-            'preticket_impreso': preticket_impreso
+            "id": mesa.id,
+            "numero": mesa.numero,
+            "estado": mesa.estado,
+            "estado_visual": estado_visual,
+            "comensales": mesa.comensales,
+            "mozo": getattr(pedido.mozo, "nombre", None) if pedido else None,
+            "preticket_impreso": preticket_impreso,
         })
-    mesas_ocupadas = sum(1 for m in mesas if m.estado == 'ocupada')
+
+   
+    
+    # Resumen de estados
+    mesas_por_cobrar = sum(
+        mesa["estado_visual"] == "por_cobrar"
+        for mesa in mesas_data
+    )
+
+    mesas_ocupadas = sum(
+        mesa.estado == "ocupada"
+        for mesa in mesas
+    ) - mesas_por_cobrar
+
     mesas_libres = sum(1 for m in mesas if m.estado == 'libre')
-    mesas_por_cobrar = sum(1 for d in mesas_data if d['estado_visual'] == 'por_cobrar')
     mesas_por_estado = {}
     for d in mesas_data:
         mesas_por_estado[d['estado_visual']] = mesas_por_estado.get(d['estado_visual'], 0) + 1
