@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, JornadaLaboral, Pedido
+from models import db, JornadaLaboral, Pedido, DetallePedido
 from datetime import datetime
 
 jornadas_bp = Blueprint('jornadas', __name__)
@@ -16,13 +16,19 @@ def iniciar():
     flash('Jornada laboral iniciada', 'success')
     return redirect(url_for('index'))
 
+def _contar_pedidos_pendientes():
+    return Pedido.query.filter(
+        Pedido.estado == 'abierto',
+        Pedido.id.in_(db.session.query(DetallePedido.pedido_id).distinct())
+    ).count()
+
 @jornadas_bp.route('/cerrar')
 def cerrar_form():
     jornada = JornadaLaboral.query.filter_by(activa=True).first()
     if not jornada:
         flash('No hay una jornada laboral activa', 'warning')
         return redirect(url_for('index'))
-    pedidos_abiertos = Pedido.query.filter_by(estado='abierto').count()
+    pedidos_abiertos = _contar_pedidos_pendientes()
     return render_template('jornadas/cerrar.html', jornada=jornada, pedidos_abiertos=pedidos_abiertos)
 
 @jornadas_bp.route('/cerrar', methods=['POST'])
@@ -31,7 +37,7 @@ def cerrar():
     if not jornada:
         flash('No hay una jornada laboral activa', 'warning')
         return redirect(url_for('index'))
-    pedidos_abiertos = Pedido.query.filter_by(estado='abierto').count()
+    pedidos_abiertos = _contar_pedidos_pendientes()
     if pedidos_abiertos > 0:
         flash(f'No se puede cerrar la jornada: hay {pedidos_abiertos} pedido(s) pendiente(s) de pago', 'danger')
         return redirect(url_for('jornadas.cerrar_form'))

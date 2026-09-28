@@ -125,6 +125,11 @@ def eliminar_detalle(detalle_id):
     pedido = detalle.pedido
     db.session.delete(detalle)
     db.session.flush()
+    if not pedido.detalles and pedido.tipo == 'mostrador':
+        db.session.delete(pedido)
+        db.session.commit()
+        flash('Item eliminado', 'success')
+        return redirect(url_for('pedidos.mostrador'))
     pedido.calcular_total()
     pedido.preticket_impreso = False
     db.session.commit()
@@ -270,12 +275,14 @@ def preticket(mesa_id):
 @pedidos_bp.route('/mostrador')
 def mostrador():
     pedido = Pedido.query.filter_by(tipo='mostrador', estado='abierto').first()
-    if not pedido:
-        jornada = JornadaLaboral.query.filter_by(activa=True).first()
-        pedido = Pedido(tipo='mostrador', jornada_id=jornada.id if jornada else None)
-        db.session.add(pedido)
-        db.session.commit()
-    return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
+    if pedido:
+        return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
+    mozos = Mozo.query.filter_by(activo=True).all()
+    productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
+    focus_search = bool(session.pop('_focus_search', None))
+    return render_template('pedidos/mesa.html', mesa=None, pedido=None,
+                           mozos=mozos, productos=productos,
+                           mostrador=True, focus_search=focus_search)
 
 @pedidos_bp.route('/mostrador/<int:pedido_id>')
 def mesa_mostrador(pedido_id):
@@ -288,21 +295,23 @@ def mesa_mostrador(pedido_id):
     focus_search = bool(session.pop('_focus_search', None))
     return render_template('pedidos/mesa.html', mesa=None, pedido=pedido, mozos=mozos, productos=productos, mostrador=True, focus_search=focus_search)
 
-@pedidos_bp.route('/mostrador/<int:pedido_id>/agregar', methods=['POST'])
-def agregar_mostrador(pedido_id):
-    pedido = Pedido.query.get_or_404(pedido_id)
-    if pedido.tipo != 'mostrador':
-        flash('Pedido inválido', 'danger')
-        return redirect(url_for('pedidos.mostrador'))
+def _crear_pedido_mostrador():
+    jornada = JornadaLaboral.query.filter_by(activa=True).first()
+    pedido = Pedido(tipo='mostrador', jornada_id=jornada.id if jornada else None)
+    db.session.add(pedido)
+    db.session.flush()
+    return pedido
+
+def _agregar_detalle_mostrador(pedido):
     producto_id = request.form.get('producto_id', type=int)
     cantidad = request.form.get('cantidad', 1.0, type=float)
     precio_custom = request.form.get('precio_unitario', type=float)
     if not producto_id:
         flash('Debe seleccionar un producto', 'danger')
-        return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
+        return None
     if cantidad is None or cantidad <= 0:
         flash('La cantidad debe ser mayor a 0', 'danger')
-        return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
+        return None
     producto = Producto.query.get_or_404(producto_id)
     precio_unitario = precio_custom if (precio_custom is not None and precio_custom >= 0) else producto.precio
     detalle = DetallePedido(
@@ -315,6 +324,28 @@ def agregar_mostrador(pedido_id):
     db.session.flush()
     pedido.calcular_total()
     pedido.preticket_impreso = False
+    return detalle
+
+@pedidos_bp.route('/mostrador/agregar', methods=['POST'])
+def agregar_mostrador_nuevo():
+    pedido = _crear_pedido_mostrador()
+    if _agregar_detalle_mostrador(pedido) is None:
+        db.session.rollback()
+        return redirect(url_for('pedidos.mostrador'))
+    db.session.commit()
+    session['_focus_search'] = True
+    flash('Producto agregado', 'success')
+    return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido.id))
+
+@pedidos_bp.route('/mostrador/<int:pedido_id>/agregar', methods=['POST'])
+def agregar_mostrador(pedido_id):
+    pedido = Pedido.query.get_or_404(pedido_id)
+    if pedido.tipo != 'mostrador':
+        flash('Pedido inválido', 'danger')
+        return redirect(url_for('pedidos.mostrador'))
+    if _agregar_detalle_mostrador(pedido) is None:
+        db.session.rollback()
+        return redirect(url_for('pedidos.mesa_mostrador', pedido_id=pedido_id))
     db.session.commit()
     session['_focus_search'] = True
     flash('Producto agregado', 'success')
