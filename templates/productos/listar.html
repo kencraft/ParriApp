@@ -10,9 +10,28 @@
     </a>
 </div>
 
+{% if productos %}
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="productoBuscar" class="form-control" placeholder="Buscar producto por nombre o categoría…" autocomplete="off">
+                    <button type="button" id="productoBuscarLimpiar" class="btn btn-outline-secondary" title="Limpiar filtro">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <span id="productoContador" class="text-muted small"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
-        {% if productos %}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -24,9 +43,9 @@
                         <th class="pe-4 text-end">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="productosTbody">
                     {% for p in productos %}
-                    <tr>
+                    <tr data-busqueda="{{ p.nombre|lower }} {{ p.categoria|lower }}">
                         <td class="ps-4 fw-medium">{{ p.nombre }}</td>
                         <td><span class="badge bg-light text-dark border rounded-pill px-3 py-2">{{ p.categoria }}</span></td>
                         <td class="text-end pe-2 fw-semibold text-primary">{{ p.precio|currency }}</td>
@@ -52,7 +71,16 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
+        <div id="productoVacio" class="text-center py-5" style="display:none">
+            <i class="bi bi-search display-1 text-muted mb-3"></i>
+            <h5 class="text-muted mb-2">No hay coincidencias</h5>
+            <p class="text-muted small mb-0">Pruebe con otro término o limpie el filtro.</p>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
         <div class="text-center py-5">
             <i class="bi bi-box display-1 text-muted mb-3"></i>
             <h5 class="text-muted mb-2">No hay productos registrados</h5>
@@ -60,11 +88,65 @@
                 <i class="bi bi-plus-lg me-1"></i> Agregar primer producto
             </a>
         </div>
-        {% endif %}
     </div>
 </div>
+{% endif %}
 
 <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mt-3 rounded-pill px-4">
     <i class="bi bi-arrow-left me-1"></i> Volver al inicio
 </a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const inputBuscar = document.getElementById('productoBuscar');
+    const btnLimpiar = document.getElementById('productoBuscarLimpiar');
+    const tbody = document.getElementById('productosTbody');
+    const empty = document.getElementById('productoVacio');
+    const contador = document.getElementById('productoContador');
+    if (!inputBuscar || !tbody) return;
+
+    const totalFilas = tbody.querySelectorAll('tr').length;
+
+    function normalizar(s) {
+        return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function aplicarFiltro() {
+        const q = normalizar(inputBuscar.value.trim());
+        let visibles = 0;
+        for (const fila of tbody.querySelectorAll('tr')) {
+            const texto = normalizar(fila.dataset.busqueda || '');
+            const match = !q || texto.indexOf(q) !== -1;
+            fila.hidden = !match;
+            if (match) visibles++;
+        }
+        if (empty) empty.style.display = (visibles === 0) ? '' : 'none';
+        if (contador) {
+            contador.textContent = q
+                ? `Mostrando ${visibles} de ${totalFilas} productos`
+                : `Total: ${totalFilas} productos`;
+        }
+    }
+
+    inputBuscar.addEventListener('input', aplicarFiltro);
+    inputBuscar.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            inputBuscar.value = '';
+            aplicarFiltro();
+        }
+    });
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', function() {
+            inputBuscar.value = '';
+            aplicarFiltro();
+            inputBuscar.focus();
+        });
+    }
+
+    inputBuscar.focus();
+    aplicarFiltro();
+})();
+</script>
 {% endblock %}

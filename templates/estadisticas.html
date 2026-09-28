@@ -22,18 +22,49 @@
     </div>
 </div>
 
+{% if sin_datos %}
+<div class="alert alert-info border-0 shadow-sm mb-4">
+    <div class="d-flex align-items-start">
+        <i class="bi bi-info-circle-fill me-3 fs-4 mt-1"></i>
+        <div>
+            <h6 class="fw-semibold mb-1">
+                {% if modo == 'jornada' %}
+                No hay jornadas registradas todavía
+                {% else %}
+                No hay jornadas dentro del rango seleccionado
+                {% endif %}
+            </h6>
+            <p class="mb-2 small">
+                {% if modo == 'jornada' %}
+                Inicie una jornada laboral y registre pedidos para ver estadísticas.
+                {# En pantallas futuras podría aparecer el botón "Iniciar Jornada" #}
+                {% if not todas_jornadas %}
+                <a href="{{ url_for('index') }}" class="alert-link">Ir al inicio para iniciar una jornada</a>
+                {% endif %}
+                {% else %}
+                Pruebe con otro rango de fechas o vuelva al modo "Por Jornada".
+                <a href="{{ url_for('estadisticas.index', modo='jornada') }}" class="alert-link ms-2">
+                    <i class="bi bi-arrow-left"></i> Volver a "Por Jornada"
+                </a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {# Filtros #}
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="fw-medium small">Modo de análisis:</span>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn {% if modo == 'jornada' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('jornada')">Por Jornada</button>
-                        <button type="button" class="btn {% if modo == 'rango' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('rango')">Por Rango de Fechas</button>
-                    </div>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-auto">
+                <span class="fw-medium small d-block mb-2">Modo de análisis:</span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn {% if modo == 'jornada' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('jornada')">Por Jornada</button>
+                    <button type="button" class="btn {% if modo == 'rango' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="cambiarModo('rango')">Por Rango de Fechas</button>
                 </div>
+            </div>
+            <div class="col">
                 <form id="formFiltro" method="GET" action="{{ url_for('estadisticas.index') }}">
                     <input type="hidden" name="modo" id="inputModo" value="{{ modo }}">
                     <div id="filtroJornada" {% if modo != 'jornada' %}style="display:none"{% endif %}>
@@ -63,38 +94,6 @@
                             </div>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <form method="GET" action="{{ url_for('estadisticas.index') }}">
-                    <input type="hidden" name="modo" value="{{ modo }}">
-                    {% if modo == 'jornada' and jornada %}
-                    <input type="hidden" name="jornada_id" value="{{ jornada.id }}">
-                    {% else %}
-                    <input type="hidden" name="fecha_desde" value="{{ fecha_desde }}">
-                    <input type="hidden" name="fecha_hasta" value="{{ fecha_hasta }}">
-                    {% endif %}
-                    <label class="form-label small fw-medium mb-1">
-                        <i class="bi bi-box me-1"></i>Consultar producto específico
-                    </label>
-                    <div class="d-flex gap-2">
-                        <select name="producto_id" class="form-select form-select-sm">
-                            <option value="">Seleccionar producto…</option>
-                            {% for p in productos %}
-                            <option value="{{ p.id }}" {% if producto_id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">Consultar</button>
-                    </div>
-                    {% if producto_info %}
-                    <div class="alert alert-info mt-2 mb-0 py-2 px-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ producto_info.nombre }}</strong>:
-                            vendidos <span class="fw-bold">{{ producto_info.cantidad|qty }}</span> unidad(es)
-                            — total <span class="fw-bold">{{ producto_info.monto|currency }}</span>
-                        </div>
-                    </div>
-                    {% endif %}
                 </form>
             </div>
         </div>
@@ -153,14 +152,75 @@
 <div class="row g-4 mb-4">
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom">
-                <h6 class="fw-semibold mb-0"><i class="bi bi-trophy me-2"></i>Top 10 productos por cantidad vendida</h6>
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-trophy me-2"></i>Productos más vendidos</h6>
+                <form method="GET" action="{{ url_for('estadisticas.index') }}" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="modo" value="{{ modo }}">
+                    {% if modo == 'jornada' and jornada %}
+                    <input type="hidden" name="jornada_id" value="{{ jornada.id }}">
+                    {% else %}
+                    <input type="hidden" name="fecha_desde" value="{{ fecha_desde }}">
+                    <input type="hidden" name="fecha_hasta" value="{{ fecha_hasta }}">
+                    {% endif %}
+                    <label class="form-label small fw-medium mb-0 text-nowrap">
+                        <i class="bi bi-tags me-1"></i>Categoría:
+                    </label>
+                    <select name="categoria_id" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()">
+                        <option value="">Todas las categorías</option>
+                        {% for c in categorias %}
+                        <option value="{{ c.id }}" {% if categoria_id_filtro == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if categoria_id_filtro %}
+                    <a href="{{ url_for('estadisticas.index', modo=modo) }}{% if modo == 'jornada' and jornada %}&jornada_id={{ jornada.id }}{% else %}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}{% endif %}" class="btn btn-link btn-sm text-decoration-none p-0" title="Limpiar filtro">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    {% endif %}
+                </form>
             </div>
-            <div class="card-body">
-                {% if top_productos %}
-                <canvas id="chartTopProductos" height="220"></canvas>
+            <div class="card-body p-0">
+                {% if ventas_productos %}
+                <div class="table-responsive" style="max-height: 420px; overflow-y:auto">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light" style="position:sticky; top:0; z-index:1">
+                            <tr>
+                                <th class="ps-4 text-center" style="width:60px">#</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end pe-4">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pid, nombre, categoria, cantidad, monto in ventas_productos %}
+                            <tr>
+                                <td class="ps-4 text-center text-muted">{{ loop.index }}</td>
+                                <td class="fw-medium">{{ nombre }}</td>
+                                <td><span class="badge bg-light text-dark border rounded-pill px-3 py-2">{{ categoria }}</span></td>
+                                <td class="text-end">{{ cantidad|qty }}</td>
+                                <td class="text-end pe-4 fw-semibold text-primary">{{ monto|currency }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="ps-4"><strong>Total ({{ ventas_productos|length }} producto(s))</strong></td>
+                                <td class="text-end"><strong>{{ ventas_productos|sum(attribute=3)|qty }}</strong></td>
+                                <td class="text-end pe-4"><strong>{{ ventas_productos|sum(attribute=4)|currency }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
                 {% else %}
-                <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
+                <div class="text-center py-5">
+                    <i class="bi bi-bar-chart display-3 text-muted mb-3"></i>
+                    <h5 class="text-muted mb-1">Sin ventas en el período{{ ' y categoría' if categoria_id_filtro else '' }} seleccionado</h5>
+                    {% if categoria_id_filtro %}
+                    <a href="{{ url_for('estadisticas.index', modo=modo) }}{% if modo == 'jornada' and jornada %}&jornada_id={{ jornada.id }}{% else %}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}{% endif %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 mt-2">
+                        <i class="bi bi-x-circle me-1"></i> Quitar filtro de categoría
+                    </a>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -199,11 +259,11 @@
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-bottom">
-                <h6 class="fw-semibold mb-0"><i class="bi bi-graph-up me-2"></i>Ventas por día</h6>
+                <h6 class="fw-semibold mb-0"><i class="bi bi-graph-up me-2"></i>Ventas por jornada</h6>
             </div>
             <div class="card-body">
-                {% if ventas_por_dia %}
-                <canvas id="chartVentasDia" height="220"></canvas>
+                {% if ventas_por_jornada %}
+                <canvas id="chartVentasJornada" height="220"></canvas>
                 {% else %}
                 <p class="text-muted fst-italic mb-0">Sin ventas en el período seleccionado.</p>
                 {% endif %}
@@ -227,26 +287,6 @@ function cambiarModo(modo) {
 }
 
 const PARRI_COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d', '#6610f2', '#fd7e14', '#20c997', '#d63384'];
-
-{% if top_productos %}
-new Chart(document.getElementById('chartTopProductos'), {
-    type: 'bar',
-    data: {
-        labels: [{% for nombre, cant, monto in top_productos %}{{ nombre|tojson }},{% endfor %}],
-        datasets: [{
-            label: 'Cantidad vendida',
-            data: [{% for nombre, cant, monto in top_productos %}{{ cant }},{% endfor %}],
-            backgroundColor: PARRI_COLORS[0],
-            borderRadius: 4
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-    }
-});
-{% endif %}
 
 {% if ventas_por_tipo %}
 new Chart(document.getElementById('chartTiposVenta'), {
@@ -284,19 +324,18 @@ new Chart(document.getElementById('chartCategorias'), {
 });
 {% endif %}
 
-{% if ventas_por_dia %}
-new Chart(document.getElementById('chartVentasDia'), {
-    type: 'line',
+{% if ventas_por_jornada %}
+new Chart(document.getElementById('chartVentasJornada'), {
+    type: 'bar',
     data: {
-        labels: [{% for dia, monto in ventas_por_dia %}{{ dia|tojson }},{% endfor %}],
+        labels: [{% for jid, fecha_inicio, monto in ventas_por_jornada %}`Jornada #{{ jid }} ({{ fecha_inicio.strftime('%d/%m/%y %H:%M') }})`,{% endfor %}],
         datasets: [{
             label: 'Ventas ($)',
-            data: [{% for dia, monto in ventas_por_dia %}{{ monto }},{% endfor %}],
+            data: [{% for jid, fecha_inicio, monto in ventas_por_jornada %}{{ monto }},{% endfor %}],
+            backgroundColor: PARRI_COLORS[1],
             borderColor: PARRI_COLORS[1],
-            backgroundColor: 'rgba(25, 135, 84, 0.15)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 4
+            borderWidth: 1,
+            borderRadius: 4
         }]
     },
     options: {
